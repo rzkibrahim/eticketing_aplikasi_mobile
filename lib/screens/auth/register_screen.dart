@@ -39,7 +39,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
-    final success = context.read<AppProvider>().register(
+    final success = await context.read<AppProvider>().register(
       _nameCtrl.text.trim(),
       _emailCtrl.text.trim(),
       _usernameCtrl.text.trim(),
@@ -120,7 +120,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: (v) => v!.isEmpty ? 'Nomor telepon diperlukan' : null),
               const SizedBox(height: 14),
               DropdownButtonFormField<String>(
-                value: _department,
+                initialValue: _department,
                 decoration: InputDecoration(
                   labelText: 'Departemen',
                   prefixIcon: const Icon(Icons.business_outlined),

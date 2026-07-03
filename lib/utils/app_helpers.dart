@@ -6,9 +6,7 @@ class AppHelpers {
     switch (status.toLowerCase()) {
       case 'open': return const Color(0xFF3B82F6);
       case 'in progress': return const Color(0xFFF59E0B);
-      case 'resolved': return const Color(0xFF10B981);
       case 'closed': return const Color(0xFF6B7280);
-      case 'pending': return const Color(0xFFEF4444);
       default: return const Color(0xFF94A3B8);
     }
   }
@@ -17,9 +15,7 @@ class AppHelpers {
     switch (status.toLowerCase()) {
       case 'open': return 'Open';
       case 'in progress': return 'Proses';
-      case 'resolved': return 'Selesai';
-      case 'closed': return 'Tutup';
-      case 'pending': return 'Tunda';
+      case 'closed': return 'Selesai';
       default: return status.toUpperCase();
     }
   }

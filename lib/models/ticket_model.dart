@@ -16,6 +16,28 @@ class CommentModel {
     required this.content,
     required this.createdAt,
   });
+
+  factory CommentModel.fromJson(Map<String, dynamic> json) {
+    return CommentModel(
+      id: json['id'] ?? '',
+      ticketId: json['ticket_id'] ?? '',
+      authorId: json['author_id'] ?? '',
+      authorName: json['author_name'] ?? '',
+      authorRole: json['author_role'] ?? '',
+      content: json['content'] ?? '',
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'ticket_id': ticketId,
+      'author_id': authorId,
+      'author_name': authorName,
+      'author_role': authorRole,
+      'content': content,
+    };
+  }
 }
 
 class TicketHistoryModel {
@@ -34,6 +56,26 @@ class TicketHistoryModel {
     required this.performedByRole,
     required this.timestamp,
   });
+
+  factory TicketHistoryModel.fromJson(Map<String, dynamic> json) {
+    return TicketHistoryModel(
+      id: json['id'] ?? '',
+      ticketId: json['ticket_id'] ?? '',
+      action: json['action'] ?? '',
+      performedBy: json['performed_by'] ?? '',
+      performedByRole: json['performed_by_role'] ?? '',
+      timestamp: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'ticket_id': ticketId,
+      'action': action,
+      'performed_by': performedBy,
+      'performed_by_role': performedByRole,
+    };
+  }
 }
 
 class TicketModel {
@@ -42,7 +84,7 @@ class TicketModel {
   final String description;
   final String category;
   final String priority; // low, medium, high
-  final String status; // open, in progress, resolved, closed, pending
+  final String status; // open, in progress, closed
   final String createdById;
   final String createdByName;
   final String? assignedToId;
@@ -70,6 +112,44 @@ class TicketModel {
     this.comments = const [],
     this.history = const [],
   });
+
+  factory TicketModel.fromJson(Map<String, dynamic> json, {
+    List<CommentModel> comments = const [],
+    List<TicketHistoryModel> history = const [],
+  }) {
+    return TicketModel(
+      id: json['id'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      category: json['category'] ?? '',
+      priority: json['priority'] ?? 'medium',
+      status: json['status'] ?? 'open',
+      createdById: json['created_by_id'] ?? '',
+      createdByName: json['created_by_name'] ?? '',
+      assignedToId: json['assigned_to_id'],
+      assignedToName: json['assigned_to_name'],
+      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+      updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toIso8601String()),
+      comments: comments,
+      history: history,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'category': category,
+      'priority': priority,
+      'status': status,
+      'created_by_id': createdById,
+      'created_by_name': createdByName,
+      'assigned_to_id': assignedToId,
+      'assigned_to_name': assignedToName,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+  }
 
   TicketModel copyWith({
     String? title,

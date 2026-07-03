@@ -5,6 +5,7 @@ import '../../providers/app_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import '../ticket/ticket_detail_screen.dart';
+import '../ticket/create_ticket_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -19,11 +20,13 @@ class _AdminScreenState extends State<AdminScreen>
   String _userSearch = '';
   String _ticketSearch = '';
   String _roleFilter = 'all';
+  String _helpdeskFilter = 'all';
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() => setState(() {}));
   }
 
   @override
@@ -35,11 +38,21 @@ class _AdminScreenState extends State<AdminScreen>
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
+    final currentUser = provider.currentUser;
+
+    if (currentUser == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final stats = provider.ticketStats;
 
     // Filter users
-    var users = provider.users.where((u) => u.id != provider.currentUser!.id).toList();
+    var users = provider.users.where((u) => u.id != currentUser.id).toList();
     if (_roleFilter != 'all') users = users.where((u) => u.role == _roleFilter).toList();
     if (_userSearch.isNotEmpty) {
       users = users.where((u) =>
@@ -49,12 +62,18 @@ class _AdminScreenState extends State<AdminScreen>
 
     // Filter tickets
     var tickets = provider.tickets;
+    if (_helpdeskFilter == 'unassigned') {
+      tickets = tickets.where((t) => t.assignedToId == null).toList();
+    } else if (_helpdeskFilter != 'all') {
+      tickets = tickets.where((t) => t.assignedToId == _helpdeskFilter).toList();
+    }
     if (_ticketSearch.isNotEmpty) {
       tickets = tickets.where((t) =>
           t.title.toLowerCase().contains(_ticketSearch.toLowerCase()) ||
           t.id.toLowerCase().contains(_ticketSearch.toLowerCase()) ||
           t.createdByName.toLowerCase().contains(_ticketSearch.toLowerCase())).toList();
     }
+    final helpdeskList = provider.helpdeskUsers;
 
     return Scaffold(
       appBar: AppBar(
@@ -176,22 +195,52 @@ class _AdminScreenState extends State<AdminScreen>
                     const SizedBox(width: 6),
                     _ticketSummaryChip('Progress', stats['in_progress']!, AppTheme.accentAmber),
                     const SizedBox(width: 6),
-                    _ticketSummaryChip('Resolved', stats['resolved']!, AppTheme.successGreen),
-                    const SizedBox(width: 6),
                     _ticketSummaryChip('Closed', stats['closed']!, Colors.grey),
                   ],
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                child: TextField(
-                  onChanged: (v) => setState(() => _ticketSearch = v),
-                  decoration: InputDecoration(
-                    hintText: 'Cari tiket...',
-                    hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12),
-                    prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                    isDense: true,
-                  ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        onChanged: (v) => setState(() => _ticketSearch = v),
+                        decoration: InputDecoration(
+                          hintText: 'Cari tiket...',
+                          hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12),
+                          prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppTheme.darkCard : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _helpdeskFilter,
+                          isDense: true,
+                          hint: Text('Helpdesk', style: GoogleFonts.plusJakartaSans(fontSize: 11)),
+                          items: [
+                            DropdownMenuItem(value: 'all', child: Text('Semua', style: GoogleFonts.plusJakartaSans(fontSize: 11))),
+                            DropdownMenuItem(value: 'unassigned', child: Text('Belum Assign', style: GoogleFonts.plusJakartaSans(fontSize: 11))),
+                            ...helpdeskList.map((h) => DropdownMenuItem(
+                              value: h.id,
+                              child: Text(h.name, style: GoogleFonts.plusJakartaSans(fontSize: 11)),
+                            )),
+                          ],
+                          onChanged: (v) => setState(() => _helpdeskFilter = v!),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Expanded(
@@ -211,7 +260,6 @@ class _AdminScreenState extends State<AdminScreen>
                               builder: (_) => TicketDetailScreen(ticketId: tickets[i].id),
                             ),
                           ),
-                          onStatusChange: (s) => provider.updateTicketStatus(tickets[i].id, s),
                           onDelete: () => _confirmDeleteTicket(context, tickets[i].id),
                         ),
                       ),
@@ -220,15 +268,18 @@ class _AdminScreenState extends State<AdminScreen>
           ),
         ],
       ),
-      floatingActionButton: _tabController.index == 0
-          ? FloatingActionButton.extended(
-              onPressed: () => _showCreateUserDialog(context),
-              icon: const Icon(Icons.person_add_rounded),
-              label: Text('Tambah User', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-              backgroundColor: AppTheme.primaryBlue,
-              foregroundColor: Colors.white,
-            )
-          : null,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _tabController.index == 0
+            ? () => _showCreateUserDialog(context)
+            : () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateTicketScreen())),
+        icon: Icon(_tabController.index == 0 ? Icons.person_add_rounded : Icons.add_rounded),
+        label: Text(
+          _tabController.index == 0 ? 'Tambah User' : 'Buat Tiket',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+        ),
+        backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
+      ),
     );
   }
 
@@ -278,8 +329,8 @@ class _AdminScreenState extends State<AdminScreen>
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.dangerRed),
-            onPressed: () {
-              context.read<AppProvider>().deleteUser(user.id);
+            onPressed: () async {
+              await context.read<AppProvider>().deleteUser(user.id);
               Navigator.pop(ctx);
             },
             child: const Text('Hapus'),
@@ -299,8 +350,8 @@ class _AdminScreenState extends State<AdminScreen>
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.dangerRed),
-            onPressed: () {
-              context.read<AppProvider>().deleteTicket(ticketId);
+            onPressed: () async {
+              await context.read<AppProvider>().deleteTicket(ticketId);
               Navigator.pop(ctx);
             },
             child: const Text('Hapus'),
@@ -365,7 +416,7 @@ class _AdminScreenState extends State<AdminScreen>
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: role,
+                          initialValue: role,
                           decoration: const InputDecoration(labelText: 'Role', isDense: true),
                           items: ['user', 'helpdesk', 'admin']
                               .map((r) => DropdownMenuItem(value: r, child: Text(r)))
@@ -376,7 +427,7 @@ class _AdminScreenState extends State<AdminScreen>
                       const SizedBox(width: 10),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: dept,
+                          initialValue: dept,
                           decoration: const InputDecoration(labelText: 'Departemen', isDense: true),
                           items: ['IT', 'Finance', 'HR', 'Marketing', 'Operations']
                               .map((d) => DropdownMenuItem(value: d, child: Text(d)))
@@ -391,9 +442,9 @@ class _AdminScreenState extends State<AdminScreen>
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (!formKey.currentState!.validate()) return;
-                        context.read<AppProvider>().createUser(
+                        await context.read<AppProvider>().createUser(
                           name: nameCtrl.text.trim(),
                           email: emailCtrl.text.trim(),
                           username: usernameCtrl.text.trim(),
@@ -467,8 +518,8 @@ class _AdminScreenState extends State<AdminScreen>
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: () {
-                  context.read<AppProvider>().updateProfile(
+                onPressed: () async {
+                  await context.read<AppProvider>().updateProfile(
                     nameCtrl.text.trim(),
                     emailCtrl.text.trim(),
                     phoneCtrl.text.trim(),
@@ -607,14 +658,12 @@ class _AdminTicketCard extends StatelessWidget {
   final ticket;
   final bool isDark;
   final VoidCallback onTap;
-  final Function(String) onStatusChange;
   final VoidCallback onDelete;
 
   const _AdminTicketCard({
     required this.ticket,
     required this.isDark,
     required this.onTap,
-    required this.onStatusChange,
     required this.onDelete,
   });
 
@@ -683,53 +732,9 @@ class _AdminTicketCard extends StatelessWidget {
                 ],
               ),
             ],
-            const SizedBox(height: 8),
-            // Quick status change
-            SizedBox(
-              height: 28,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: ['open', 'in progress', 'resolved', 'closed'].map((s) {
-                  final selected = ticket.status == s;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: GestureDetector(
-                      onTap: () => onStatusChange(s),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? statusColor(s)
-                              : statusColor(s).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          s,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: selected ? Colors.white : statusColor(s),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
           ],
         ),
       ),
     );
-  }
-
-  Color statusColor(String s) {
-    switch (s) {
-      case 'open': return const Color(0xFF3B82F6);
-      case 'in progress': return AppTheme.accentAmber;
-      case 'resolved': return AppTheme.successGreen;
-      case 'closed': return Colors.grey;
-      default: return Colors.grey;
-    }
   }
 }

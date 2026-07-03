@@ -1,0 +1,643 @@
+openapi: 3.0.0
+info:
+  title: UTS Mobile - E-Ticketing Helpdesk API
+  description: >-
+    Dokumentasi API untuk aplikasi E-Ticketing Helpdesk Mobile.
+
+
+    Project: uts_mobile
+
+    Backend: Supabase (PostgreSQL)
+
+    Base URL: https://onphaqtfgljduatmuzkt.supabase.co
+
+
+    Aplikasi ini menggunakan Supabase REST API (PostgREST) untuk mengakses
+    database PostgreSQL.
+
+
+    Setiap request memerlukan header:
+
+    - apikey: Supabase anon key
+
+    - Authorization: Bearer <anon_key>
+
+    - Content-Type: application/json
+  version: 1.0.0
+servers:
+  - url: undefined://{{base_url}}
+components:
+  securitySchemes:
+    apikeyAuth:
+      type: http
+      scheme: apikey
+security:
+  - apikeyAuth: []
+tags:
+  - name: Auth
+    description: Endpoint untuk autentikasi pengguna (login, register, reset password).
+  - name: Users
+    description: Endpoint untuk manajemen data pengguna.
+  - name: Tickets
+    description: Endpoint untuk manajemen tiket helpdesk.
+  - name: Comments
+    description: Endpoint untuk manajemen komentar pada tiket.
+  - name: Ticket History
+    description: Endpoint untuk riwayat perubahan tiket.
+  - name: Notifications
+    description: Endpoint untuk manajemen notifikasi.
+paths:
+  /rest/v1/users:
+    get:
+      tags:
+        - Users
+      summary: Get User by ID
+      description: Mengambil data pengguna berdasarkan ID (UUID).
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: id
+          in: query
+          schema:
+            type: string
+          description: UUID pengguna
+          example: eq.33333333-0000-0000-0000-000000000001
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: '*'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - Users
+      summary: Create User (Admin)
+      description: |-
+        Admin membuat pengguna baru (user/helpdesk/admin).
+
+        **Role yang tersedia**: user, helpdesk, admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Helpdesk Baru
+                email: helpdeskbaru@company.com
+                username: helpdeskbaru
+                password: '123456'
+                role: helpdesk
+                department: IT Support
+                avatar: HB
+                phone: '087654321098'
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: Prefer
+          in: header
+          schema:
+            type: string
+          example: return=representation
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    patch:
+      tags:
+        - Users
+      summary: Update User Profile
+      description: Memperbarui profil pengguna (nama, email, telepon, departemen).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Budi Santoso Updated
+                email: budi.updated@company.com
+                phone: '081234567899'
+                department: IT
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: id
+          in: query
+          schema:
+            type: string
+          example: eq.33333333-0000-0000-0000-000000000001
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Users
+      summary: Delete User
+      description: Menghapus pengguna berdasarkan ID. Hanya bisa dilakukan oleh admin.
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: id
+          in: query
+          schema:
+            type: string
+          example: eq.33333333-0000-0000-0000-000000000001
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /rest/v1/tickets:
+    get:
+      tags:
+        - Tickets
+      summary: Get Tickets by User
+      description: Mengambil semua tiket yang dibuat oleh user tertentu.
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: created_by_id
+          in: query
+          schema:
+            type: string
+          description: UUID pembuat tiket
+          example: eq.33333333-0000-0000-0000-000000000001
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: '*'
+        - name: order
+          in: query
+          schema:
+            type: string
+          example: created_at.desc
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - Tickets
+      summary: Create Ticket
+      description: |-
+        Membuat tiket baru.
+
+        **Catatan**: ID tiket di-generate oleh aplikasi dengan format TKT-XXX.
+
+        **Kategori**: Hardware, Software, Network, Account, Other
+        **Prioritas**: low, medium, high
+        **Status default**: open
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                id: TKT-007
+                title: Wifi kantor lambat
+                description: >-
+                  Koneksi internet di lantai 2 sangat lambat sejak tadi pagi.
+                  Semua karyawan terdampak.
+                category: Network
+                priority: high
+                status: open
+                created_by_id: 33333333-0000-0000-0000-000000000001
+                created_by_name: Budi Santoso
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: Prefer
+          in: header
+          schema:
+            type: string
+          example: return=representation
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    patch:
+      tags:
+        - Tickets
+      summary: Update Ticket Details
+      description: |-
+        Memperbarui detail tiket (judul, deskripsi, kategori, prioritas).
+
+        Hanya bisa dilakukan oleh pemilik tiket selama status masih 'open'.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                title: Laptop tidak bisa menyala (Updated)
+                description: Deskripsi yang diperbarui...
+                category: Hardware
+                priority: medium
+                updated_at: '2026-06-04T12:00:00+07:00'
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: id
+          in: query
+          schema:
+            type: string
+          example: eq.TKT-001
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - Tickets
+      summary: Delete Ticket
+      description: >-
+        Menghapus tiket beserta semua data terkait (comments, history,
+        notifications).
+
+
+        **Perhatian**: Sebelum menghapus tiket, hapus terlebih dahulu data
+        terkait di tabel comments, ticket_history, dan notifications.
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: id
+          in: query
+          schema:
+            type: string
+          example: eq.TKT-001
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /rest/v1/comments:
+    get:
+      tags:
+        - Comments
+      summary: Get Comments by Ticket
+      description: Mengambil semua komentar pada tiket tertentu.
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: ticket_id
+          in: query
+          schema:
+            type: string
+          example: eq.TKT-001
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: '*'
+        - name: order
+          in: query
+          schema:
+            type: string
+          description: Urutkan dari yang terlama
+          example: created_at
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - Comments
+      summary: Add Comment
+      description: Menambahkan komentar pada tiket. Bisa dilakukan oleh semua role.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                ticket_id: TKT-001
+                author_id: 22222222-0000-0000-0000-000000000001
+                author_name: Rizky Prasetyo
+                author_role: helpdesk
+                content: >-
+                  Masalah sudah saya identifikasi. Akan saya perbaiki dalam 1
+                  jam.
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: Prefer
+          in: header
+          schema:
+            type: string
+          example: return=representation
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /rest/v1/ticket_history:
+    get:
+      tags:
+        - Ticket History
+      summary: Get History by Ticket
+      description: >-
+        Mengambil riwayat perubahan tiket (pembuatan, perubahan status,
+        assignment, dll).
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: ticket_id
+          in: query
+          schema:
+            type: string
+          example: eq.TKT-001
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: '*'
+        - name: order
+          in: query
+          schema:
+            type: string
+          example: created_at
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - Ticket History
+      summary: Add History Entry
+      description: >-
+        Menambahkan entri riwayat ke tiket. Otomatis ditambahkan saat status
+        berubah, tiket di-assign, atau komentar ditambahkan.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                ticket_id: TKT-001
+                action: Status diubah menjadi Resolved
+                performed_by: Rizky Prasetyo
+                performed_by_role: helpdesk
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /rest/v1/notifications:
+    get:
+      tags:
+        - Notifications
+      summary: Get Notifications by User
+      description: Mengambil notifikasi untuk pengguna tertentu.
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: user_id
+          in: query
+          schema:
+            type: string
+          example: eq.33333333-0000-0000-0000-000000000001
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: '*'
+        - name: order
+          in: query
+          schema:
+            type: string
+          example: created_at.desc
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    patch:
+      tags:
+        - Notifications
+      summary: Mark All Notifications as Read
+      description: Menandai semua notifikasi pengguna sebagai sudah dibaca.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                is_read: true
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: user_id
+          in: query
+          schema:
+            type: string
+          description: UUID pengguna
+          example: eq.33333333-0000-0000-0000-000000000001
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - Notifications
+      summary: Create Notification
+      description: >-
+        Membuat notifikasi baru.
+
+
+        **Tipe notifikasi**: new_ticket, status_update, new_comment, assigned,
+        resolved
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                title: Tiket baru dibuat
+                body: Tiket "Wifi kantor lambat" berhasil dibuat
+                ticket_id: TKT-007
+                type: new_ticket
+                user_id: 33333333-0000-0000-0000-000000000001
+      parameters:
+        - name: apikey
+          in: header
+          schema:
+            type: string
+          example: '{{anon_key}}'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: Bearer {{anon_key}}
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}

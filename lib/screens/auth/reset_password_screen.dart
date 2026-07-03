@@ -30,7 +30,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
-    final success = context.read<AppProvider>().resetPassword(
+    final success = await context.read<AppProvider>().resetPassword(
       _emailCtrl.text.trim(),
       _newPasswordCtrl.text,
     );

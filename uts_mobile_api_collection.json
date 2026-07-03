@@ -1,0 +1,1009 @@
+{
+	"info": {
+		"_postman_id": "uts-mobile-helpdesk-api",
+		"name": "UTS Mobile - E-Ticketing Helpdesk API",
+		"description": "Dokumentasi API untuk aplikasi E-Ticketing Helpdesk Mobile.\n\nProject: uts_mobile\nBackend: Supabase (PostgreSQL)\nBase URL: https://onphaqtfgljduatmuzkt.supabase.co\n\nAplikasi ini menggunakan Supabase REST API (PostgREST) untuk mengakses database PostgreSQL.\n\nSetiap request memerlukan header:\n- apikey: Supabase anon key\n- Authorization: Bearer <anon_key>\n- Content-Type: application/json",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://onphaqtfgljduatmuzkt.supabase.co"
+		},
+		{
+			"key": "anon_key",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ucGhhcXRmZ2xqZHVhdG11emt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MjMxMDIsImV4cCI6MjA5NjA5OTEwMn0.pcm6z-PsQN-IPZIHhUsaRpR_qPLS1neM708GwW92hiQ"
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "key",
+				"value": "apikey",
+				"type": "string"
+			},
+			{
+				"key": "value",
+				"value": "{{anon_key}}",
+				"type": "string"
+			},
+			{
+				"key": "in",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"description": "Endpoint untuk autentikasi pengguna (login, register, reset password).",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/users?username=eq.budi&password=eq.123456&select=*",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "users"],
+							"query": [
+								{
+									"key": "username",
+									"value": "eq.budi",
+									"description": "Username pengguna"
+								},
+								{
+									"key": "password",
+									"value": "eq.123456",
+									"description": "Password pengguna"
+								},
+								{
+									"key": "select",
+									"value": "*",
+									"description": "Ambil semua kolom"
+								}
+							]
+						},
+						"description": "Login pengguna dengan mencocokkan username dan password dari tabel users.\n\n**Response sukses**: Array berisi 1 objek user.\n**Response gagal**: Array kosong `[]`.\n\n**Demo Akun**:\n- User: budi / 123456\n- Helpdesk: rizky / 123456\n- Admin: admin / admin123"
+					},
+					"response": [
+						{
+							"name": "Login Berhasil",
+							"status": "OK",
+							"code": 200,
+							"body": "[{\"id\":\"33333333-0000-0000-0000-000000000001\",\"name\":\"Budi Santoso\",\"email\":\"budi@company.com\",\"username\":\"budi\",\"password\":\"123456\",\"role\":\"user\",\"department\":\"Finance\",\"avatar\":\"BS\",\"phone\":\"081234567890\",\"created_at\":\"2026-06-04T00:00:00+00:00\"}]"
+						},
+						{
+							"name": "Login Gagal",
+							"status": "OK",
+							"code": 200,
+							"body": "[]"
+						}
+					]
+				},
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Prefer",
+								"value": "return=representation"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"User Baru\",\n  \"email\": \"userbaru@company.com\",\n  \"username\": \"userbaru\",\n  \"password\": \"password123\",\n  \"role\": \"user\",\n  \"department\": \"IT\",\n  \"avatar\": \"UB\",\n  \"phone\": \"089876543210\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/users",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "users"]
+						},
+						"description": "Registrasi pengguna baru. Role default adalah 'user'.\n\n**Validasi sebelum request**: Pastikan username dan email belum terdaftar dengan memanggil endpoint cek duplikasi terlebih dahulu."
+					},
+					"response": [
+						{
+							"name": "Register Berhasil",
+							"status": "Created",
+							"code": 201,
+							"body": "[{\"id\":\"generated-uuid\",\"name\":\"User Baru\",\"email\":\"userbaru@company.com\",\"username\":\"userbaru\",\"role\":\"user\",\"department\":\"IT\",\"avatar\":\"UB\",\"phone\":\"089876543210\",\"created_at\":\"2026-06-04T00:00:00+00:00\"}]"
+						}
+					]
+				},
+				{
+					"name": "Cek Duplikasi Username/Email",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/users?select=id&or=(username.eq.userbaru,email.eq.userbaru@company.com)",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "users"],
+							"query": [
+								{
+									"key": "select",
+									"value": "id"
+								},
+								{
+									"key": "or",
+									"value": "(username.eq.userbaru,email.eq.userbaru@company.com)",
+									"description": "Cek apakah username atau email sudah ada"
+								}
+							]
+						},
+						"description": "Mengecek apakah username atau email sudah terdaftar sebelum registrasi.\n\n**Jika array kosong** `[]`: username/email belum terdaftar, bisa lanjut register.\n**Jika array berisi data**: username/email sudah terdaftar."
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"password\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/users?email=eq.budi@company.com",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "users"],
+							"query": [
+								{
+									"key": "email",
+									"value": "eq.budi@company.com",
+									"description": "Email pengguna yang ingin di-reset"
+								}
+							]
+						},
+						"description": "Reset password pengguna berdasarkan email."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"description": "Endpoint untuk manajemen data pengguna.",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/users?select=*&order=created_at",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "users"],
+							"query": [
+								{
+									"key": "select",
+									"value": "*"
+								},
+								{
+									"key": "order",
+									"value": "created_at"
+								}
+							]
+						},
+						"description": "Mengambil semua data pengguna. Digunakan oleh admin untuk manajemen user."
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/users?id=eq.33333333-0000-0000-0000-000000000001&select=*",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "users"],
+							"query": [
+								{
+									"key": "id",
+									"value": "eq.33333333-0000-0000-0000-000000000001",
+									"description": "UUID pengguna"
+								},
+								{
+									"key": "select",
+									"value": "*"
+								}
+							]
+						},
+						"description": "Mengambil data pengguna berdasarkan ID (UUID)."
+					},
+					"response": []
+				},
+				{
+					"name": "Create User (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Prefer",
+								"value": "return=representation"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Helpdesk Baru\",\n  \"email\": \"helpdeskbaru@company.com\",\n  \"username\": \"helpdeskbaru\",\n  \"password\": \"123456\",\n  \"role\": \"helpdesk\",\n  \"department\": \"IT Support\",\n  \"avatar\": \"HB\",\n  \"phone\": \"087654321098\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/users",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "users"]
+						},
+						"description": "Admin membuat pengguna baru (user/helpdesk/admin).\n\n**Role yang tersedia**: user, helpdesk, admin"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Profile",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Budi Santoso Updated\",\n  \"email\": \"budi.updated@company.com\",\n  \"phone\": \"081234567899\",\n  \"department\": \"IT\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/users?id=eq.33333333-0000-0000-0000-000000000001",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "users"],
+							"query": [
+								{
+									"key": "id",
+									"value": "eq.33333333-0000-0000-0000-000000000001"
+								}
+							]
+						},
+						"description": "Memperbarui profil pengguna (nama, email, telepon, departemen)."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/users?id=eq.33333333-0000-0000-0000-000000000001",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "users"],
+							"query": [
+								{
+									"key": "id",
+									"value": "eq.33333333-0000-0000-0000-000000000001"
+								}
+							]
+						},
+						"description": "Menghapus pengguna berdasarkan ID. Hanya bisa dilakukan oleh admin."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Tickets",
+			"description": "Endpoint untuk manajemen tiket helpdesk.",
+			"item": [
+				{
+					"name": "Get All Tickets",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/tickets?select=*&order=created_at.desc",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "tickets"],
+							"query": [
+								{
+									"key": "select",
+									"value": "*"
+								},
+								{
+									"key": "order",
+									"value": "created_at.desc",
+									"description": "Urutkan dari terbaru"
+								}
+							]
+						},
+						"description": "Mengambil semua tiket, diurutkan dari yang terbaru."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Ticket by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/tickets?id=eq.TKT-001&select=*",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "tickets"],
+							"query": [
+								{
+									"key": "id",
+									"value": "eq.TKT-001"
+								},
+								{
+									"key": "select",
+									"value": "*"
+								}
+							]
+						},
+						"description": "Mengambil detail tiket berdasarkan ID (contoh: TKT-001)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tickets by User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/tickets?created_by_id=eq.33333333-0000-0000-0000-000000000001&select=*&order=created_at.desc",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "tickets"],
+							"query": [
+								{
+									"key": "created_by_id",
+									"value": "eq.33333333-0000-0000-0000-000000000001",
+									"description": "UUID pembuat tiket"
+								},
+								{
+									"key": "select",
+									"value": "*"
+								},
+								{
+									"key": "order",
+									"value": "created_at.desc"
+								}
+							]
+						},
+						"description": "Mengambil semua tiket yang dibuat oleh user tertentu."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Ticket",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Prefer",
+								"value": "return=representation"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"TKT-007\",\n  \"title\": \"Wifi kantor lambat\",\n  \"description\": \"Koneksi internet di lantai 2 sangat lambat sejak tadi pagi. Semua karyawan terdampak.\",\n  \"category\": \"Network\",\n  \"priority\": \"high\",\n  \"status\": \"open\",\n  \"created_by_id\": \"33333333-0000-0000-0000-000000000001\",\n  \"created_by_name\": \"Budi Santoso\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/tickets",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "tickets"]
+						},
+						"description": "Membuat tiket baru.\n\n**Catatan**: ID tiket di-generate oleh aplikasi dengan format TKT-XXX.\n\n**Kategori**: Hardware, Software, Network, Account, Other\n**Prioritas**: low, medium, high\n**Status default**: open"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Ticket Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"resolved\",\n  \"updated_at\": \"2026-06-04T12:00:00+07:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/tickets?id=eq.TKT-001",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "tickets"],
+							"query": [
+								{
+									"key": "id",
+									"value": "eq.TKT-001"
+								}
+							]
+						},
+						"description": "Mengubah status tiket.\n\n**Status yang tersedia**: open, in progress, resolved, closed, pending\n\nBisa dilakukan oleh helpdesk dan admin."
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Ticket to Helpdesk",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"assigned_to_id\": \"22222222-0000-0000-0000-000000000001\",\n  \"assigned_to_name\": \"Rizky Prasetyo\",\n  \"status\": \"in progress\",\n  \"updated_at\": \"2026-06-04T12:00:00+07:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/tickets?id=eq.TKT-002",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "tickets"],
+							"query": [
+								{
+									"key": "id",
+									"value": "eq.TKT-002"
+								}
+							]
+						},
+						"description": "Meng-assign tiket ke staff helpdesk. Status otomatis diubah menjadi 'in progress'.\n\nHanya bisa dilakukan oleh admin."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Ticket Details",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Laptop tidak bisa menyala (Updated)\",\n  \"description\": \"Deskripsi yang diperbarui...\",\n  \"category\": \"Hardware\",\n  \"priority\": \"medium\",\n  \"updated_at\": \"2026-06-04T12:00:00+07:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/tickets?id=eq.TKT-001",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "tickets"],
+							"query": [
+								{
+									"key": "id",
+									"value": "eq.TKT-001"
+								}
+							]
+						},
+						"description": "Memperbarui detail tiket (judul, deskripsi, kategori, prioritas).\n\nHanya bisa dilakukan oleh pemilik tiket selama status masih 'open'."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Ticket",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/tickets?id=eq.TKT-001",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "tickets"],
+							"query": [
+								{
+									"key": "id",
+									"value": "eq.TKT-001"
+								}
+							]
+						},
+						"description": "Menghapus tiket beserta semua data terkait (comments, history, notifications).\n\n**Perhatian**: Sebelum menghapus tiket, hapus terlebih dahulu data terkait di tabel comments, ticket_history, dan notifications."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Comments",
+			"description": "Endpoint untuk manajemen komentar pada tiket.",
+			"item": [
+				{
+					"name": "Get Comments by Ticket",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/comments?ticket_id=eq.TKT-001&select=*&order=created_at",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "comments"],
+							"query": [
+								{
+									"key": "ticket_id",
+									"value": "eq.TKT-001"
+								},
+								{
+									"key": "select",
+									"value": "*"
+								},
+								{
+									"key": "order",
+									"value": "created_at",
+									"description": "Urutkan dari yang terlama"
+								}
+							]
+						},
+						"description": "Mengambil semua komentar pada tiket tertentu."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Comment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Prefer",
+								"value": "return=representation"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ticket_id\": \"TKT-001\",\n  \"author_id\": \"22222222-0000-0000-0000-000000000001\",\n  \"author_name\": \"Rizky Prasetyo\",\n  \"author_role\": \"helpdesk\",\n  \"content\": \"Masalah sudah saya identifikasi. Akan saya perbaiki dalam 1 jam.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/comments",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "comments"]
+						},
+						"description": "Menambahkan komentar pada tiket. Bisa dilakukan oleh semua role."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Ticket History",
+			"description": "Endpoint untuk riwayat perubahan tiket.",
+			"item": [
+				{
+					"name": "Get History by Ticket",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/ticket_history?ticket_id=eq.TKT-001&select=*&order=created_at",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "ticket_history"],
+							"query": [
+								{
+									"key": "ticket_id",
+									"value": "eq.TKT-001"
+								},
+								{
+									"key": "select",
+									"value": "*"
+								},
+								{
+									"key": "order",
+									"value": "created_at"
+								}
+							]
+						},
+						"description": "Mengambil riwayat perubahan tiket (pembuatan, perubahan status, assignment, dll)."
+					},
+					"response": []
+				},
+				{
+					"name": "Add History Entry",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ticket_id\": \"TKT-001\",\n  \"action\": \"Status diubah menjadi Resolved\",\n  \"performed_by\": \"Rizky Prasetyo\",\n  \"performed_by_role\": \"helpdesk\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/ticket_history",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "ticket_history"]
+						},
+						"description": "Menambahkan entri riwayat ke tiket. Otomatis ditambahkan saat status berubah, tiket di-assign, atau komentar ditambahkan."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Notifications",
+			"description": "Endpoint untuk manajemen notifikasi.",
+			"item": [
+				{
+					"name": "Get All Notifications",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/notifications?select=*&order=created_at.desc",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "notifications"],
+							"query": [
+								{
+									"key": "select",
+									"value": "*"
+								},
+								{
+									"key": "order",
+									"value": "created_at.desc"
+								}
+							]
+						},
+						"description": "Mengambil semua notifikasi."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notifications by User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rest/v1/notifications?user_id=eq.33333333-0000-0000-0000-000000000001&select=*&order=created_at.desc",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "notifications"],
+							"query": [
+								{
+									"key": "user_id",
+									"value": "eq.33333333-0000-0000-0000-000000000001"
+								},
+								{
+									"key": "select",
+									"value": "*"
+								},
+								{
+									"key": "order",
+									"value": "created_at.desc"
+								}
+							]
+						},
+						"description": "Mengambil notifikasi untuk pengguna tertentu."
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Notification as Read",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"is_read\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/notifications?id=eq.<notification_id>",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "notifications"],
+							"query": [
+								{
+									"key": "id",
+									"value": "eq.<notification_id>",
+									"description": "UUID notifikasi"
+								}
+							]
+						},
+						"description": "Menandai notifikasi sebagai sudah dibaca."
+					},
+					"response": []
+				},
+				{
+					"name": "Mark All Notifications as Read",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"is_read\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/notifications?user_id=eq.33333333-0000-0000-0000-000000000001",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "notifications"],
+							"query": [
+								{
+									"key": "user_id",
+									"value": "eq.33333333-0000-0000-0000-000000000001",
+									"description": "UUID pengguna"
+								}
+							]
+						},
+						"description": "Menandai semua notifikasi pengguna sebagai sudah dibaca."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Notification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "apikey",
+								"value": "{{anon_key}}"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{anon_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Tiket baru dibuat\",\n  \"body\": \"Tiket \\\"Wifi kantor lambat\\\" berhasil dibuat\",\n  \"ticket_id\": \"TKT-007\",\n  \"type\": \"new_ticket\",\n  \"user_id\": \"33333333-0000-0000-0000-000000000001\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/rest/v1/notifications",
+							"host": ["{{base_url}}"],
+							"path": ["rest", "v1", "notifications"]
+						},
+						"description": "Membuat notifikasi baru.\n\n**Tipe notifikasi**: new_ticket, status_update, new_comment, assigned, resolved"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

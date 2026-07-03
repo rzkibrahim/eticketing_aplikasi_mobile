@@ -5,6 +5,7 @@ import '../../providers/app_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import '../ticket/ticket_detail_screen.dart';
+import '../ticket/create_ticket_screen.dart';
 
 class HelpdeskScreen extends StatefulWidget {
   const HelpdeskScreen({super.key});
@@ -33,7 +34,16 @@ class _HelpdeskScreenState extends State<HelpdeskScreen>
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
-    final user = provider.currentUser!;
+    final user = provider.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final allTickets = provider.tickets;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -42,10 +52,14 @@ class _HelpdeskScreenState extends State<HelpdeskScreen>
         .where((t) => t.assignedToId == user.id)
         .toList();
 
-    // Unassigned tickets (open/pending without assignment)
+    // Unassigned tickets (open without assignment)
     var unassigned = allTickets
-        .where((t) => t.assignedToId == null && (t.status == 'open' || t.status == 'pending'))
+        .where((t) => t.assignedToId == null && t.status == 'open')
         .toList();
+
+    // Stats for helpdesk
+    final myActive = myTickets.where((t) => t.status == 'in progress').length;
+    final myClosed = myTickets.where((t) => t.status == 'closed').length;
 
     if (_searchQuery.isNotEmpty) {
       myTickets = myTickets
@@ -109,6 +123,34 @@ class _HelpdeskScreenState extends State<HelpdeskScreen>
       ),
       body: Column(
         children: [
+          // Helpdesk statistics
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppTheme.accentCyan, Color(0xFF0891B2)],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.accentCyan.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _statItem('Ditugaskan', myTickets.length, Colors.white),
+                _dividerV(),
+                _statItem('Proses', myActive, Colors.white),
+                _dividerV(),
+                _statItem('Selesai', myClosed, Colors.white),
+              ],
+            ),
+          ),
           // Search
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -145,8 +187,19 @@ class _HelpdeskScreenState extends State<HelpdeskScreen>
                               builder: (_) => TicketDetailScreen(ticketId: myTickets[i].id),
                             ),
                           ),
-                          onStatusChange: (status) =>
-                              provider.updateTicketStatus(myTickets[i].id, status),
+                          onFinish: () {
+                            provider.closeTicket(myTickets[i].id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Tiket berhasil diselesaikan!',
+                                    style: GoogleFonts.plusJakartaSans()),
+                                backgroundColor: AppTheme.successGreen,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                          },
                         ),
                       ),
                 // Unassigned tickets
@@ -188,7 +241,35 @@ class _HelpdeskScreenState extends State<HelpdeskScreen>
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CreateTicketScreen()),
+        ),
+        icon: const Icon(Icons.add_rounded),
+        label: Text('Buat Tiket',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+        backgroundColor: AppTheme.accentCyan,
+        foregroundColor: Colors.white,
+      ),
     );
+  }
+
+  Widget _statItem(String label, int count, Color color) {
+    return Column(
+      children: [
+        Text('$count',
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 20, fontWeight: FontWeight.w800, color: color)),
+        Text(label,
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 10, color: color.withOpacity(0.8), fontWeight: FontWeight.w500)),
+      ],
+    );
+  }
+
+  Widget _dividerV() {
+    return Container(width: 1, height: 32, color: Colors.white.withOpacity(0.3));
   }
 }
 
@@ -197,7 +278,7 @@ class _HelpdeskTicketCard extends StatelessWidget {
   final bool isDark;
   final bool showActions;
   final VoidCallback onTap;
-  final Function(String)? onStatusChange;
+  final VoidCallback? onFinish;
   final VoidCallback? onTakeOver;
 
   const _HelpdeskTicketCard({
@@ -205,7 +286,7 @@ class _HelpdeskTicketCard extends StatelessWidget {
     required this.isDark,
     required this.showActions,
     required this.onTap,
-    this.onStatusChange,
+    this.onFinish,
     this.onTakeOver,
   });
 
@@ -261,8 +342,8 @@ class _HelpdeskTicketCard extends StatelessWidget {
                 Text(ticket.createdByName,
                     style: GoogleFonts.plusJakartaSans(fontSize: 11, color: Colors.grey)),
                 const Spacer(),
-                if (showActions && onStatusChange != null)
-                  _statusDropdown(context)
+                if (showActions && onFinish != null && ticket.status == 'in progress')
+                  _finishButton()
                 else if (onTakeOver != null)
                   _takeOverButton(),
               ],
@@ -273,27 +354,26 @@ class _HelpdeskTicketCard extends StatelessWidget {
     );
   }
 
-  Widget _statusDropdown(BuildContext context) {
-    final statuses = ['open', 'in progress', 'resolved', 'pending'];
-    return Container(
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryBlue.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.3)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: statuses.contains(ticket.status) ? ticket.status : statuses.first,
-          isDense: true,
-          icon: const Icon(Icons.expand_more_rounded, size: 14, color: AppTheme.primaryBlue),
-          style: GoogleFonts.plusJakartaSans(
-              fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryBlue),
-          items: statuses.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-          onChanged: (s) {
-            if (s != null) onStatusChange!(s);
-          },
+  Widget _finishButton() {
+    return GestureDetector(
+      onTap: onFinish,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.successGreen,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle_rounded, size: 14, color: Colors.white),
+            const SizedBox(width: 4),
+            Text(
+              'Selesai',
+              style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+            ),
+          ],
         ),
       ),
     );

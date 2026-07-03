@@ -21,6 +21,33 @@ class UserModel {
     required this.phone,
   });
 
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      username: json['username'] ?? '',
+      password: json['password'] ?? '',
+      role: json['role'] ?? 'user',
+      department: json['department'] ?? '',
+      avatar: json['avatar'] ?? '',
+      phone: json['phone'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'email': email,
+      'username': username,
+      'password': password,
+      'role': role,
+      'department': department,
+      'avatar': avatar,
+      'phone': phone,
+    };
+  }
+
   UserModel copyWith({
     String? name,
     String? email,

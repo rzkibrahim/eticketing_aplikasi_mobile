@@ -49,7 +49,7 @@ class _EditTicketScreenState extends State<EditTicketScreen> {
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
-    context.read<AppProvider>().updateTicket(
+    await context.read<AppProvider>().updateTicket(
       ticketId: widget.ticketId,
       title: _titleCtrl.text.trim(),
       description: _descCtrl.text.trim(),

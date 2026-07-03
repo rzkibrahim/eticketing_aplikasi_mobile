@@ -23,8 +23,62 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
   File? _attachment;
 
   Future<void> _pickImage() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Pilih Sumber Foto',
+                style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.photo_library_rounded, color: AppTheme.primaryBlue),
+                ),
+                title: Text('Galeri', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+                subtitle: Text('Pilih dari galeri foto', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey)),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentCyan.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.camera_alt_rounded, color: AppTheme.accentCyan),
+                ),
+                title: Text('Kamera', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+                subtitle: Text('Ambil foto baru', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey)),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (source == null) return;
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
         _attachment = File(pickedFile.path);
@@ -51,7 +105,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
-    context.read<AppProvider>().createTicket(
+    await context.read<AppProvider>().createTicket(
       title: _titleCtrl.text.trim(),
       description: _descCtrl.text.trim(),
       category: _category,
@@ -193,7 +247,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                             Text('Ketuk untuk memilih foto dari galeri',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12, 
-                                  color: Theme.of(context).colorScheme.onBackground.withOpacity(0.6)
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)
                                 )),
                           ],
                         )
@@ -260,7 +314,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         text,
         style: GoogleFonts.plusJakartaSans(
           fontSize: 13, fontWeight: FontWeight.w700,
-          color: Theme.of(context).colorScheme.onBackground,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
     );

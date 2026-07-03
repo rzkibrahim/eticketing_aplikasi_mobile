@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/app_provider.dart';
 import '../../theme/app_theme.dart';
 import '../auth/login_screen.dart';
+import 'setting_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -39,9 +40,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  void _save() {
+  void _save() async {
     if (!_formKey.currentState!.validate()) return;
-    context.read<AppProvider>().updateProfile(
+    await context.read<AppProvider>().updateProfile(
       _nameCtrl.text.trim(),
       _emailCtrl.text.trim(),
       _phoneCtrl.text.trim(),
@@ -58,41 +59,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _logout() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Keluar', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-        content: Text(
-          'Yakin ingin keluar dari aplikasi?',
-          style: GoogleFonts.plusJakartaSans(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Batal', style: GoogleFonts.plusJakartaSans()),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.dangerRed),
-            onPressed: () {
-              context.read<AppProvider>().logout();
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (_) => false,
-              );
-            },
-            child: Text('Keluar', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
-    final user = provider.currentUser!;
+    final user = provider.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final isDark = provider.isDarkMode;
     final stats = provider.ticketStats;
 
@@ -252,46 +231,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
                 ],
               ),
-              child: Column(
-                children: [
-                  _settingTile(
-                    icon: Icons.dark_mode_rounded,
-                    label: 'Mode Gelap',
-                    color: const Color(0xFF6B7280),
-                    trailing: Switch(
-                      value: isDark,
-                      onChanged: (_) => provider.toggleTheme(),
-                      activeColor: AppTheme.primaryBlue,
-                    ),
-                  ),
-                  const Divider(height: 1, indent: 56),
-                  _settingTile(
-                    icon: Icons.lock_outline_rounded,
-                    label: 'Ubah Password',
-                    color: AppTheme.accentAmber,
-                    onTap: () => _showChangePasswordDialog(context),
-                  ),
-                  const Divider(height: 1, indent: 56),
-                  _settingTile(
-                    icon: Icons.info_outline_rounded,
-                    label: 'Tentang Aplikasi',
-                    color: AppTheme.primaryBlue,
-                    onTap: () => _showAbout(context),
-                  ),
-                  const Divider(height: 1, indent: 56),
-                  _settingTile(
-                    icon: Icons.logout_rounded,
-                    label: 'Keluar',
-                    color: AppTheme.dangerRed,
-                    onTap: _logout,
-                    textColor: AppTheme.dangerRed,
-                  ),
-                ],
+              child: _settingTile(
+                icon: Icons.settings_rounded,
+                label: 'Pengaturan',
+                color: AppTheme.primaryBlue,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingScreen()),
+                ),
               ),
             ),
             const SizedBox(height: 40),
             Text(
-              'E-Ticketing Helpdesk v1.0.0\nDIV Teknik Informatika - Universitas Airlangga',
+              'E-Ticketing Helpdesk v2.0.0\nDIV Teknik Informatika - Universitas Airlangga',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 color: Colors.grey.shade400,
@@ -455,104 +407,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showChangePasswordDialog(BuildContext context) {
-    final oldCtrl = TextEditingController();
-    final newCtrl = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Ubah Password', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: oldCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password Lama',
-                  prefixIcon: Icon(Icons.lock_outline_rounded),
-                ),
-                validator: (v) => v!.isEmpty ? 'Diperlukan' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: newCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password Baru',
-                  prefixIcon: Icon(Icons.lock_rounded),
-                ),
-                validator: (v) {
-                  if (v!.isEmpty) return 'Diperlukan';
-                  if (v.length < 6) return 'Min. 6 karakter';
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              final user = context.read<AppProvider>().currentUser!;
-              if (oldCtrl.text != user.password) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Password lama salah!', style: GoogleFonts.plusJakartaSans()),
-                    backgroundColor: AppTheme.dangerRed,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                );
-                return;
-              }
-              context.read<AppProvider>().resetPassword(user.email, newCtrl.text);
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Password berhasil diubah!', style: GoogleFonts.plusJakartaSans()),
-                  backgroundColor: AppTheme.successGreen,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              );
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAbout(BuildContext context) {
-    showAboutDialog(
-      context: context,
-      applicationName: 'E-Ticketing Helpdesk',
-      applicationVersion: '1.0.0',
-      applicationIcon: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppTheme.primaryBlue, AppTheme.primaryDark],
-          ),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: const Icon(Icons.support_agent_rounded, color: Colors.white, size: 32),
-      ),
-      children: [
-        Text(
-          'Aplikasi E-Ticketing Helpdesk untuk pelaporan, monitoring, dan penyelesaian masalah IT.\n\nDIV Teknik Informatika\nUniversitas Airlangga',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13, height: 1.6),
-        ),
-      ],
-    );
-  }
 }

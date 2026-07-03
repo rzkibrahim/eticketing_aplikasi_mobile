@@ -25,8 +25,62 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
   File? _commentAttachment;
 
   Future<void> _pickCommentImage() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Pilih Sumber Foto',
+                style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.photo_library_rounded, color: AppTheme.primaryBlue),
+                ),
+                title: Text('Galeri', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+                subtitle: Text('Pilih dari galeri foto', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey)),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentCyan.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.camera_alt_rounded, color: AppTheme.accentCyan),
+                ),
+                title: Text('Kamera', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+                subtitle: Text('Ambil foto baru', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey)),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (source == null) return;
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
         _commentAttachment = File(pickedFile.path);
@@ -37,7 +91,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -55,10 +109,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
     
     String finalMsg = _commentCtrl.text.trim();
     if (_commentAttachment != null) {
-      finalMsg += (finalMsg.isNotEmpty ? '\n\n' : '') + '[Mendelampirkan Foto: ${_commentAttachment!.path.split('/').last}]';
+      finalMsg += '${finalMsg.isNotEmpty ? '\n\n' : ''}[Mendelampirkan Foto: ${_commentAttachment!.path.split('/').last}]';
     }
 
-    context.read<AppProvider>().addComment(widget.ticketId, finalMsg);
+    await context.read<AppProvider>().addComment(widget.ticketId, finalMsg);
     _commentCtrl.clear();
     setState(() {
       _sendingComment = false;
@@ -104,10 +158,11 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
               icon: const Icon(Icons.delete_outline_rounded),
               onPressed: () => _showDeleteDialog(context),
             ),
-          if (role == 'helpdesk' || role == 'admin')
+          if (role == 'helpdesk' && ticket.status == 'in progress')
             IconButton(
-              icon: const Icon(Icons.update_rounded),
-              onPressed: () => _showStatusDialog(context, ticket.status),
+              icon: const Icon(Icons.check_circle_rounded),
+              tooltip: 'Selesaikan Tiket',
+              onPressed: () => _showFinishDialog(context),
             ),
           if (role == 'admin')
             IconButton(
@@ -189,6 +244,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
                 Tab(text: 'Deskripsi'),
                 Tab(text: 'Komentar'),
                 Tab(text: 'Riwayat'),
+                Tab(text: 'Tracking'),
               ],
             ),
           ),
@@ -323,6 +379,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
                           return _HistoryItem(history: h);
                         },
                       ),
+                // Tracking tab
+                _TrackingTab(status: ticket.status),
               ],
             ),
           ),
@@ -360,8 +418,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.dangerRed),
-            onPressed: () {
-              context.read<AppProvider>().deleteTicket(widget.ticketId);
+            onPressed: () async {
+              await context.read<AppProvider>().deleteTicket(widget.ticketId);
               Navigator.pop(ctx);
               Navigator.pop(context);
             },
@@ -372,23 +430,34 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
     );
   }
 
-  void _showStatusDialog(BuildContext context, String current) {
-    final statuses = ['open', 'in progress', 'resolved', 'closed', 'pending'];
+  void _showFinishDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Update Status', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: statuses.map((s) => ListTile(
-            title: StatusBadge(status: s),
-            trailing: s == current ? const Icon(Icons.check, color: AppTheme.primaryBlue) : null,
-            onTap: () {
-              context.read<AppProvider>().updateTicketStatus(widget.ticketId, s);
+        title: Text('Selesaikan Tiket', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+        content: Text('Yakin ingin menandai tiket ini sebagai selesai?', style: GoogleFonts.plusJakartaSans()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.successGreen),
+            onPressed: () async {
+              await context.read<AppProvider>().closeTicket(widget.ticketId);
               Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Tiket berhasil diselesaikan!', style: GoogleFonts.plusJakartaSans()),
+                  backgroundColor: AppTheme.successGreen,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              );
             },
-          )).toList(),
-        ),
+            child: const Text('Selesai'),
+          ),
+        ],
       ),
     );
   }
@@ -405,8 +474,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
             leading: AvatarWidget(initials: h.avatar, role: h.role, size: 36),
             title: Text(h.name, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 13)),
             subtitle: Text(h.department, style: GoogleFonts.plusJakartaSans(fontSize: 11)),
-            onTap: () {
-              context.read<AppProvider>().assignTicket(widget.ticketId, h.id);
+            onTap: () async {
+              await context.read<AppProvider>().assignTicket(widget.ticketId, h.id);
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -551,4 +620,219 @@ class _HistoryItem extends StatelessWidget {
       ],
     );
   }
+}
+
+class _TrackingTab extends StatelessWidget {
+  final String status;
+  const _TrackingTab({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final stages = [
+      _TrackingStage('Open', 'Tiket telah dibuat dan menunggu ditangani', Icons.fiber_new_rounded, const Color(0xFF3B82F6)),
+      _TrackingStage('In Progress', 'Helpdesk sedang menangani tiket', Icons.pending_actions_rounded, AppTheme.accentAmber),
+      _TrackingStage('Closed', 'Tiket telah diselesaikan', Icons.check_circle_rounded, AppTheme.successGreen),
+    ];
+
+    // Determine current step index
+    int currentIndex;
+    switch (status.toLowerCase()) {
+      case 'open':
+        currentIndex = 0;
+        break;
+      case 'in progress':
+        currentIndex = 1;
+        break;
+      case 'closed':
+        currentIndex = 2;
+        break;
+      default:
+        currentIndex = 0;
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Current status header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  stages[currentIndex].color,
+                  stages[currentIndex].color.withOpacity(0.7),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: stages[currentIndex].color.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(stages[currentIndex].icon, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Status Saat Ini',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11, color: Colors.white.withOpacity(0.8), fontWeight: FontWeight.w500)),
+                      Text(stages[currentIndex].label,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 18, color: Colors.white, fontWeight: FontWeight.w800)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text('Progres Tiket',
+            style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 16),
+          // Stepper
+          ...List.generate(stages.length, (i) {
+            final stage = stages[i];
+            final isCompleted = i <= currentIndex;
+            final isCurrent = i == currentIndex;
+            final isLast = i == stages.length - 1;
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Step indicator column
+                Column(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: isCurrent ? 36 : 28,
+                      height: isCurrent ? 36 : 28,
+                      decoration: BoxDecoration(
+                        color: isCompleted ? stage.color : (isDark ? AppTheme.darkSurface : Colors.grey.shade200),
+                        shape: BoxShape.circle,
+                        border: isCurrent
+                            ? Border.all(color: stage.color.withOpacity(0.4), width: 3)
+                            : null,
+                        boxShadow: isCurrent
+                            ? [BoxShadow(color: stage.color.withOpacity(0.3), blurRadius: 10)]
+                            : null,
+                      ),
+                      child: Icon(
+                        isCompleted ? stage.icon : Icons.circle_outlined,
+                        color: isCompleted ? Colors.white : Colors.grey.shade400,
+                        size: isCurrent ? 18 : 14,
+                      ),
+                    ),
+                    if (!isLast)
+                      Container(
+                        width: 3,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isCompleted && i < currentIndex
+                              ? stage.color
+                              : (isDark ? AppTheme.darkSurface : Colors.grey.shade200),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 14),
+                // Content
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isCurrent
+                            ? stage.color.withOpacity(isDark ? 0.15 : 0.08)
+                            : (isDark ? AppTheme.darkCard : Colors.white),
+                        borderRadius: BorderRadius.circular(12),
+                        border: isCurrent
+                            ? Border.all(color: stage.color.withOpacity(0.3))
+                            : Border.all(color: Colors.transparent),
+                        boxShadow: isCurrent
+                            ? null
+                            : [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                stage.label,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
+                                  color: isCompleted ? stage.color : Colors.grey.shade400,
+                                ),
+                              ),
+                              if (isCurrent) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: stage.color,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text('Saat Ini',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                                ),
+                              ],
+                              if (isCompleted && !isCurrent) ...[
+                                const Spacer(),
+                                Icon(Icons.check_rounded, size: 16, color: stage.color),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            stage.description,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: isCompleted
+                                  ? (isDark ? Colors.white60 : Colors.grey.shade600)
+                                  : Colors.grey.shade400,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrackingStage {
+  final String label;
+  final String description;
+  final IconData icon;
+  final Color color;
+  const _TrackingStage(this.label, this.description, this.icon, this.color);
 }

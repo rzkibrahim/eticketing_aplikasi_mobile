@@ -1,116 +1,217 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 import '../models/user_model.dart';
 import '../models/ticket_model.dart';
 import '../models/notification_model.dart';
-import '../utils/dummy_data.dart';
+import '../services/supabase_service.dart';
 
 class AppProvider extends ChangeNotifier {
   UserModel? _currentUser;
-  List<TicketModel> _tickets = List.from(DummyData.tickets);
-  List<UserModel> _users = List.from(DummyData.users);
-  List<NotificationModel> _notifications = List.from(DummyData.notifications);
+  List<TicketModel> _tickets = [];
+  List<UserModel> _users = [];
+  List<NotificationModel> _notifications = [];
   bool _isDarkMode = false;
-  final Uuid _uuid = const Uuid();
+  bool _isLoading = false;
+  String? _error;
 
   UserModel? get currentUser => _currentUser;
   List<TicketModel> get tickets => _tickets;
   List<UserModel> get users => _users;
   List<NotificationModel> get notifications => _notifications;
   bool get isDarkMode => _isDarkMode;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
 
+  final _client = SupabaseService.client;
+
+  // ============================================================
+  // INITIALIZATION — Load all data from Supabase
+  // ============================================================
+  Future<void> loadData() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await Future.wait([
+        _loadUsers(),
+        _loadTickets(),
+        _loadNotifications(),
+      ]);
+      _error = null;
+    } catch (e) {
+      _error = e.toString();
+      debugPrint('Error loading data: $e');
+    }
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> _loadUsers() async {
+    final data = await _client.from('users').select().order('created_at');
+    _users = data.map<UserModel>((json) => UserModel.fromJson(json)).toList();
+  }
+
+  Future<void> _loadTickets() async {
+    final ticketData = await _client.from('tickets').select().order('created_at', ascending: false);
+    final commentData = await _client.from('comments').select().order('created_at');
+    final historyData = await _client.from('ticket_history').select().order('created_at');
+
+    _tickets = ticketData.map<TicketModel>((json) {
+      final ticketId = json['id'];
+      final comments = commentData
+          .where((c) => c['ticket_id'] == ticketId)
+          .map<CommentModel>((c) => CommentModel.fromJson(c))
+          .toList();
+      final history = historyData
+          .where((h) => h['ticket_id'] == ticketId)
+          .map<TicketHistoryModel>((h) => TicketHistoryModel.fromJson(h))
+          .toList();
+      return TicketModel.fromJson(json, comments: comments, history: history);
+    }).toList();
+  }
+
+  Future<void> _loadNotifications() async {
+    final data = await _client.from('notifications').select().order('created_at', ascending: false);
+    _notifications = data.map<NotificationModel>((json) => NotificationModel.fromJson(json)).toList();
+  }
+
+  // ============================================================
   // Filtered notifications for current user
+  // ============================================================
   List<NotificationModel> get userNotifications {
     if (_currentUser == null) return [];
-    // Admin/helpdesk see all, users see only their own
     if (_currentUser!.role != 'user') return _notifications;
-    return _notifications.where((n) {
-      final ticket = _tickets.firstWhere(
-        (t) => t.id == n.ticketId,
-        orElse: () => _tickets.first,
-      );
-      return ticket.createdById == _currentUser!.id;
-    }).toList();
+    return _notifications.where((n) => n.userId == _currentUser!.id).toList();
   }
 
   int get unreadCount => userNotifications.where((n) => !n.isRead).length;
 
-  // Auth
-  bool login(String username, String password) {
-    final user = _users.firstWhere(
-      (u) => u.username == username && u.password == password,
-      orElse: () => _users[0],
-    );
-    if (user.username == username && user.password == password) {
-      _currentUser = user;
-      notifyListeners();
-      return true;
+  // ============================================================
+  // AUTH
+  // ============================================================
+  Future<bool> login(String username, String password) async {
+    try {
+      final data = await _client
+          .from('users')
+          .select()
+          .eq('username', username)
+          .eq('password', password)
+          .maybeSingle();
+
+      if (data != null) {
+        _currentUser = UserModel.fromJson(data);
+        await loadData();
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Login error: $e');
+      return false;
     }
-    return false;
   }
 
   void logout() {
     _currentUser = null;
+    _tickets = [];
+    _notifications = [];
     notifyListeners();
   }
 
-  bool register(String name, String email, String username, String password, String department, String phone) {
-    final exists = _users.any((u) => u.username == username || u.email == email);
-    if (exists) return false;
-    final newUser = UserModel(
-      id: 'u${_uuid.v4().substring(0, 6)}',
-      name: name,
-      email: email,
-      username: username,
-      password: password,
-      role: 'user',
-      department: department,
-      avatar: name.substring(0, 2).toUpperCase(),
-      phone: phone,
-    );
-    _users.add(newUser);
-    notifyListeners();
-    return true;
+  Future<bool> register(String name, String email, String username, String password, String department, String phone) async {
+    try {
+      // Check if username or email already exists
+      final existing = await _client
+          .from('users')
+          .select('id')
+          .or('username.eq.$username,email.eq.$email');
+
+      if (existing.isNotEmpty) return false;
+
+      await _client.from('users').insert({
+        'name': name,
+        'email': email,
+        'username': username,
+        'password': password,
+        'role': 'user',
+        'department': department,
+        'avatar': name.substring(0, 2).toUpperCase(),
+        'phone': phone,
+      });
+
+      await _loadUsers();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Register error: $e');
+      return false;
+    }
   }
 
-  bool resetPassword(String email, String newPassword) {
-    final idx = _users.indexWhere((u) => u.email == email);
-    if (idx == -1) return false;
-    final u = _users[idx];
-    _users[idx] = UserModel(
-      id: u.id, name: u.name, email: u.email,
-      username: u.username, password: newPassword,
-      role: u.role, department: u.department,
-      avatar: u.avatar, phone: u.phone,
-    );
-    notifyListeners();
-    return true;
+  Future<bool> resetPassword(String email, String newPassword) async {
+    try {
+      final data = await _client
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle();
+
+      if (data == null) return false;
+
+      await _client
+          .from('users')
+          .update({'password': newPassword})
+          .eq('email', email);
+
+      await _loadUsers();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Reset password error: $e');
+      return false;
+    }
   }
 
-  void updateProfile(String name, String email, String phone, String department) {
+  Future<void> updateProfile(String name, String email, String phone, String department) async {
     if (_currentUser == null) return;
-    final idx = _users.indexWhere((u) => u.id == _currentUser!.id);
-    if (idx == -1) return;
-    final updated = _currentUser!.copyWith(
-      name: name, email: email, phone: phone, department: department,
-    );
-    _users[idx] = UserModel(
-      id: updated.id, name: updated.name, email: updated.email,
-      username: updated.username, password: _users[idx].password,
-      role: updated.role, department: updated.department,
-      avatar: name.substring(0, 2).toUpperCase(), phone: updated.phone,
-    );
-    _currentUser = _users[idx];
-    notifyListeners();
+    try {
+      await _client.from('users').update({
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'department': department,
+        'avatar': name.substring(0, 2).toUpperCase(),
+      }).eq('id', _currentUser!.id);
+
+      await _loadUsers();
+      _currentUser = _users.firstWhere((u) => u.id == _currentUser!.id);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Update profile error: $e');
+    }
   }
 
-  // Tickets
+  // ============================================================
+  // TICKETS
+  // ============================================================
   List<TicketModel> get userTickets {
     if (_currentUser == null) return [];
     if (_currentUser!.role == 'user') {
       return _tickets.where((t) => t.createdById == _currentUser!.id).toList();
     }
+    if (_currentUser!.role == 'helpdesk') {
+      return _tickets.where((t) => t.assignedToId == _currentUser!.id).toList();
+    }
     return _tickets;
+  }
+
+  // Helpdesk: all assigned tickets
+  List<TicketModel> get helpdeskAssignedTickets {
+    if (_currentUser == null || _currentUser!.role != 'helpdesk') return [];
+    return _tickets.where((t) => t.assignedToId == _currentUser!.id).toList();
+  }
+
+  // Admin: filter tickets by helpdesk
+  List<TicketModel> getTicketsByHelpdesk(String helpdeskId) {
+    return _tickets.where((t) => t.assignedToId == helpdeskId).toList();
   }
 
   TicketModel? getTicketById(String id) {
@@ -121,174 +222,227 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
-  void createTicket({
+  Future<void> createTicket({
     required String title,
     required String description,
     required String category,
     required String priority,
-  }) {
+  }) async {
     if (_currentUser == null) return;
-    final ticketNumber = _tickets.length + 1;
-    final id = 'TKT-${ticketNumber.toString().padLeft(3, '0')}';
-    final newTicket = TicketModel(
-      id: id,
-      title: title,
-      description: description,
-      category: category,
-      priority: priority,
-      status: 'open',
-      createdById: _currentUser!.id,
-      createdByName: _currentUser!.name,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-      history: [
-        TicketHistoryModel(
-          id: _uuid.v4(),
-          ticketId: id,
-          action: 'Tiket dibuat',
-          performedBy: _currentUser!.name,
-          performedByRole: _currentUser!.role,
-          timestamp: DateTime.now(),
-        ),
-      ],
-    );
-    _tickets.insert(0, newTicket);
-    _addNotification(
-      title: 'Tiket baru dibuat',
-      body: 'Tiket "$title" berhasil dibuat',
-      ticketId: id,
-      type: 'new_ticket',
-    );
-    notifyListeners();
+    try {
+      // Generate ticket ID
+      final countData = await _client.from('tickets').select('id');
+      final ticketNumber = countData.length + 1;
+      final id = 'TKT-${ticketNumber.toString().padLeft(3, '0')}';
+
+      await _client.from('tickets').insert({
+        'id': id,
+        'title': title,
+        'description': description,
+        'category': category,
+        'priority': priority,
+        'status': 'open',
+        'created_by_id': _currentUser!.id,
+        'created_by_name': _currentUser!.name,
+      });
+
+      // Add history
+      await _client.from('ticket_history').insert({
+        'ticket_id': id,
+        'action': 'Tiket dibuat',
+        'performed_by': _currentUser!.name,
+        'performed_by_role': _currentUser!.role,
+      });
+
+      // Add notification
+      await _addNotification(
+        title: 'Tiket baru dibuat',
+        body: 'Tiket "$title" berhasil dibuat',
+        ticketId: id,
+        type: 'new_ticket',
+      );
+
+      await _loadTickets();
+      await _loadNotifications();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Create ticket error: $e');
+    }
   }
 
-  void updateTicketStatus(String ticketId, String newStatus) {
-    final idx = _tickets.indexWhere((t) => t.id == ticketId);
-    if (idx == -1) return;
-    final ticket = _tickets[idx];
-    final newHistory = List<TicketHistoryModel>.from(ticket.history)
-      ..add(TicketHistoryModel(
-        id: _uuid.v4(),
+  Future<void> updateTicketStatus(String ticketId, String newStatus) async {
+    try {
+      await _client.from('tickets').update({
+        'status': newStatus,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', ticketId);
+
+      await _client.from('ticket_history').insert({
+        'ticket_id': ticketId,
+        'action': 'Status diubah menjadi ${_statusLabel(newStatus)}',
+        'performed_by': _currentUser?.name ?? 'System',
+        'performed_by_role': _currentUser?.role ?? 'system',
+      });
+
+      final ticket = getTicketById(ticketId);
+      await _addNotification(
+        title: 'Status tiket diperbarui',
+        body: 'Status "${ticket?.title}" diubah menjadi ${_statusLabel(newStatus)}',
         ticketId: ticketId,
-        action: 'Status diubah menjadi ${_statusLabel(newStatus)}',
-        performedBy: _currentUser?.name ?? 'System',
-        performedByRole: _currentUser?.role ?? 'system',
-        timestamp: DateTime.now(),
-      ));
-    _tickets[idx] = ticket.copyWith(
-      status: newStatus,
-      updatedAt: DateTime.now(),
-      history: newHistory,
-    );
-    _addNotification(
-      title: 'Status tiket diperbarui',
-      body: 'Status "${ ticket.title}" diubah menjadi ${_statusLabel(newStatus)}',
-      ticketId: ticketId,
-      type: 'status_update',
-    );
-    notifyListeners();
+        type: 'status_update',
+      );
+
+      await _loadTickets();
+      await _loadNotifications();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Update ticket status error: $e');
+    }
   }
 
-  void assignTicket(String ticketId, String helpdeskId) {
-    final idx = _tickets.indexWhere((t) => t.id == ticketId);
-    if (idx == -1) return;
-    final helpdesk = _users.firstWhere((u) => u.id == helpdeskId);
-    final ticket = _tickets[idx];
-    final newHistory = List<TicketHistoryModel>.from(ticket.history)
-      ..add(TicketHistoryModel(
-        id: _uuid.v4(),
+  Future<void> closeTicket(String ticketId) async {
+    try {
+      await _client.from('tickets').update({
+        'status': 'closed',
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', ticketId);
+
+      await _client.from('ticket_history').insert({
+        'ticket_id': ticketId,
+        'action': 'Tiket diselesaikan dan ditutup',
+        'performed_by': _currentUser?.name ?? 'Helpdesk',
+        'performed_by_role': _currentUser?.role ?? 'helpdesk',
+      });
+
+      final ticket = getTicketById(ticketId);
+      await _addNotification(
+        title: 'Tiket selesai',
+        body: 'Tiket "${ticket?.title}" telah diselesaikan',
         ticketId: ticketId,
-        action: 'Tiket di-assign ke ${helpdesk.name}',
-        performedBy: _currentUser?.name ?? 'Admin',
-        performedByRole: _currentUser?.role ?? 'admin',
-        timestamp: DateTime.now(),
-      ));
-    _tickets[idx] = ticket.copyWith(
-      assignedToId: helpdeskId,
-      assignedToName: helpdesk.name,
-      status: 'in progress',
-      updatedAt: DateTime.now(),
-      history: newHistory,
-    );
-    notifyListeners();
+        type: 'status_update',
+      );
+
+      await _loadTickets();
+      await _loadNotifications();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Close ticket error: $e');
+    }
   }
 
-  void updateTicket({
+  Future<void> assignTicket(String ticketId, String helpdeskId) async {
+    try {
+      final helpdesk = _users.firstWhere((u) => u.id == helpdeskId);
+
+      await _client.from('tickets').update({
+        'assigned_to_id': helpdeskId,
+        'assigned_to_name': helpdesk.name,
+        'status': 'in progress',
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', ticketId);
+
+      await _client.from('ticket_history').insert({
+        'ticket_id': ticketId,
+        'action': 'Tiket di-assign ke ${helpdesk.name}',
+        'performed_by': _currentUser?.name ?? 'Admin',
+        'performed_by_role': _currentUser?.role ?? 'admin',
+      });
+
+      await _loadTickets();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Assign ticket error: $e');
+    }
+  }
+
+  Future<void> updateTicket({
     required String ticketId,
     required String title,
     required String description,
     required String category,
     required String priority,
-  }) {
-    final idx = _tickets.indexWhere((t) => t.id == ticketId);
-    if (idx == -1) return;
-    final ticket = _tickets[idx];
-    final newHistory = List<TicketHistoryModel>.from(ticket.history)
-      ..add(TicketHistoryModel(
-        id: _uuid.v4(),
-        ticketId: ticketId,
-        action: 'Tiket diperbarui',
-        performedBy: _currentUser?.name ?? 'User',
-        performedByRole: _currentUser?.role ?? 'user',
-        timestamp: DateTime.now(),
-      ));
-    _tickets[idx] = ticket.copyWith(
-      title: title,
-      description: description,
-      category: category,
-      priority: priority,
-      updatedAt: DateTime.now(),
-      history: newHistory,
-    );
-    notifyListeners();
+  }) async {
+    try {
+      await _client.from('tickets').update({
+        'title': title,
+        'description': description,
+        'category': category,
+        'priority': priority,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', ticketId);
+
+      await _client.from('ticket_history').insert({
+        'ticket_id': ticketId,
+        'action': 'Tiket diperbarui',
+        'performed_by': _currentUser?.name ?? 'User',
+        'performed_by_role': _currentUser?.role ?? 'user',
+      });
+
+      await _loadTickets();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Update ticket error: $e');
+    }
   }
 
-  void deleteTicket(String ticketId) {
-    _tickets.removeWhere((t) => t.id == ticketId);
-    _notifications.removeWhere((n) => n.ticketId == ticketId);
-    notifyListeners();
+  Future<void> deleteTicket(String ticketId) async {
+    try {
+      // Delete related data first (comments, history, notifications)
+      await _client.from('notifications').delete().eq('ticket_id', ticketId);
+      await _client.from('comments').delete().eq('ticket_id', ticketId);
+      await _client.from('ticket_history').delete().eq('ticket_id', ticketId);
+      await _client.from('tickets').delete().eq('id', ticketId);
+
+      _tickets.removeWhere((t) => t.id == ticketId);
+      _notifications.removeWhere((n) => n.ticketId == ticketId);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Delete ticket error: $e');
+    }
   }
 
-  void addComment(String ticketId, String content) {
+  Future<void> addComment(String ticketId, String content) async {
     if (_currentUser == null) return;
-    final idx = _tickets.indexWhere((t) => t.id == ticketId);
-    if (idx == -1) return;
-    final ticket = _tickets[idx];
-    final newComment = CommentModel(
-      id: _uuid.v4(),
-      ticketId: ticketId,
-      authorId: _currentUser!.id,
-      authorName: _currentUser!.name,
-      authorRole: _currentUser!.role,
-      content: content,
-      createdAt: DateTime.now(),
-    );
-    final newComments = List<CommentModel>.from(ticket.comments)..add(newComment);
-    final newHistory = List<TicketHistoryModel>.from(ticket.history)
-      ..add(TicketHistoryModel(
-        id: _uuid.v4(),
+    try {
+      await _client.from('comments').insert({
+        'ticket_id': ticketId,
+        'author_id': _currentUser!.id,
+        'author_name': _currentUser!.name,
+        'author_role': _currentUser!.role,
+        'content': content,
+      });
+
+      await _client.from('ticket_history').insert({
+        'ticket_id': ticketId,
+        'action': 'Komentar ditambahkan oleh ${_currentUser!.name}',
+        'performed_by': _currentUser!.name,
+        'performed_by_role': _currentUser!.role,
+      });
+
+      await _client.from('tickets').update({
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', ticketId);
+
+      final ticket = getTicketById(ticketId);
+      await _addNotification(
+        title: 'Komentar baru',
+        body: '${_currentUser!.name} menambahkan komentar pada tiket "${ticket?.title}"',
         ticketId: ticketId,
-        action: 'Komentar ditambahkan oleh ${_currentUser!.name}',
-        performedBy: _currentUser!.name,
-        performedByRole: _currentUser!.role,
-        timestamp: DateTime.now(),
-      ));
-    _tickets[idx] = ticket.copyWith(
-      comments: newComments,
-      updatedAt: DateTime.now(),
-      history: newHistory,
-    );
-    _addNotification(
-      title: 'Komentar baru',
-      body: '${_currentUser!.name} menambahkan komentar pada tiket "${ticket.title}"',
-      ticketId: ticketId,
-      type: 'new_comment',
-    );
-    notifyListeners();
+        type: 'new_comment',
+      );
+
+      await _loadTickets();
+      await _loadNotifications();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Add comment error: $e');
+    }
   }
 
-  // Users (admin only)
-  void createUser({
+  // ============================================================
+  // USERS (admin only)
+  // ============================================================
+  Future<void> createUser({
     required String name,
     required String email,
     required String username,
@@ -296,57 +450,100 @@ class AppProvider extends ChangeNotifier {
     required String role,
     required String department,
     required String phone,
-  }) {
-    final newUser = UserModel(
-      id: _uuid.v4().substring(0, 8),
-      name: name,
-      email: email,
-      username: username,
-      password: password,
-      role: role,
-      department: department,
-      avatar: name.substring(0, 2).toUpperCase(),
-      phone: phone,
-    );
-    _users.add(newUser);
-    notifyListeners();
+  }) async {
+    try {
+      await _client.from('users').insert({
+        'name': name,
+        'email': email,
+        'username': username,
+        'password': password,
+        'role': role,
+        'department': department,
+        'avatar': name.substring(0, 2).toUpperCase(),
+        'phone': phone,
+      });
+
+      await _loadUsers();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Create user error: $e');
+    }
   }
 
-  void deleteUser(String userId) {
-    _users.removeWhere((u) => u.id == userId);
-    notifyListeners();
+  Future<void> deleteUser(String userId) async {
+    try {
+      await _client.from('users').delete().eq('id', userId);
+      _users.removeWhere((u) => u.id == userId);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Delete user error: $e');
+    }
   }
 
-  // Notifications
-  void _addNotification({
+  // ============================================================
+  // NOTIFICATIONS
+  // ============================================================
+  Future<void> _addNotification({
     required String title,
     required String body,
     required String ticketId,
     required String type,
-  }) {
-    _notifications.insert(0, NotificationModel(
-      id: _uuid.v4(),
-      title: title,
-      body: body,
-      ticketId: ticketId,
-      type: type,
-      createdAt: DateTime.now(),
-    ));
+  }) async {
+    try {
+      // Add notification for all admins and helpdesk users
+      final targetUsers = _users.where((u) => u.role != 'user').toList();
+      // Also add for the ticket creator
+      final ticket = _tickets.where((t) => t.id == ticketId).toList();
+      if (ticket.isNotEmpty) {
+        final creatorId = ticket.first.createdById;
+        if (!targetUsers.any((u) => u.id == creatorId)) {
+          final creator = _users.where((u) => u.id == creatorId).toList();
+          if (creator.isNotEmpty) targetUsers.add(creator.first);
+        }
+      }
+
+      for (final user in targetUsers) {
+        await _client.from('notifications').insert({
+          'title': title,
+          'body': body,
+          'ticket_id': ticketId,
+          'type': type,
+          'user_id': user.id,
+        });
+      }
+    } catch (e) {
+      debugPrint('Add notification error: $e');
+    }
   }
 
-  void markNotificationRead(String id) {
-    final idx = _notifications.indexWhere((n) => n.id == id);
-    if (idx != -1) {
-      _notifications[idx].isRead = true;
+  Future<void> markNotificationRead(String id) async {
+    try {
+      await _client.from('notifications').update({'is_read': true}).eq('id', id);
+      final idx = _notifications.indexWhere((n) => n.id == id);
+      if (idx != -1) {
+        _notifications[idx].isRead = true;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Mark notification read error: $e');
+    }
+  }
+
+  Future<void> markAllRead() async {
+    try {
+      if (_currentUser == null) return;
+      await _client
+          .from('notifications')
+          .update({'is_read': true})
+          .eq('user_id', _currentUser!.id);
+
+      for (var n in userNotifications) {
+        n.isRead = true;
+      }
       notifyListeners();
+    } catch (e) {
+      debugPrint('Mark all read error: $e');
     }
-  }
-
-  void markAllRead() {
-    for (var n in _notifications) {
-      n.isRead = true;
-    }
-    notifyListeners();
   }
 
   void toggleTheme() {
@@ -358,23 +555,33 @@ class AppProvider extends ChangeNotifier {
     switch (status) {
       case 'open': return 'Open';
       case 'in progress': return 'In Progress';
-      case 'resolved': return 'Resolved';
       case 'closed': return 'Closed';
-      case 'pending': return 'Pending';
       default: return status;
     }
   }
 
   // Stats
   Map<String, int> get ticketStats {
-    final relevant = userTickets;
+    final relevant = _currentUser?.role == 'helpdesk'
+        ? helpdeskAssignedTickets
+        : _currentUser?.role == 'user'
+            ? userTickets
+            : _tickets;
     return {
       'total': relevant.length,
       'open': relevant.where((t) => t.status == 'open').length,
       'in_progress': relevant.where((t) => t.status == 'in progress').length,
-      'resolved': relevant.where((t) => t.status == 'resolved').length,
       'closed': relevant.where((t) => t.status == 'closed').length,
-      'pending': relevant.where((t) => t.status == 'pending').length,
+    };
+  }
+
+  // Global stats for admin (always all tickets)
+  Map<String, int> get globalTicketStats {
+    return {
+      'total': _tickets.length,
+      'open': _tickets.where((t) => t.status == 'open').length,
+      'in_progress': _tickets.where((t) => t.status == 'in progress').length,
+      'closed': _tickets.where((t) => t.status == 'closed').length,
     };
   }
 

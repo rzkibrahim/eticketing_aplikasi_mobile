@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
-    final success = context.read<AppProvider>().login(
+    final success = await context.read<AppProvider>().login(
       _usernameCtrl.text.trim(),
       _passwordCtrl.text,
     );
@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen>
                           )),
                           const SizedBox(height: 6),
                           _demoRow('User', 'budi / 123456'),
-                          _demoRow('Helpdesk', 'rizky / 123456'),
+                          _demoRow('Helpdesk', 'rizki / 123456'),
                           _demoRow('Admin', 'admin / admin123'),
                         ],
                       ),

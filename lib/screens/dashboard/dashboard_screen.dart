@@ -14,18 +14,27 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
-    final user = provider.currentUser!;
+    final user = provider.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final stats = provider.ticketStats;
     final tickets = provider.userTickets;
     final recentTickets = tickets.take(3).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.support_agent_rounded, size: 22),
-            const SizedBox(width: 8),
-            const Text('E-Ticketing'),
+            Icon(Icons.support_agent_rounded, size: 22),
+            SizedBox(width: 8),
+            Text('E-Ticketing'),
           ],
         ),
         actions: [
@@ -37,7 +46,7 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () async => await Future.delayed(const Duration(milliseconds: 500)),
+        onRefresh: () async => await provider.loadData(),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
@@ -66,10 +75,10 @@ class DashboardScreen extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                childAspectRatio: 1.3,
+                childAspectRatio: 1.4,
                 children: [
                   StatCard(
-                    label: 'Total Tiket',
+                    label: 'Total',
                     count: stats['total']!,
                     color: AppTheme.primaryBlue,
                     icon: Icons.confirmation_num_rounded,
@@ -87,10 +96,10 @@ class DashboardScreen extends StatelessWidget {
                     icon: Icons.pending_actions_rounded,
                   ),
                   StatCard(
-                    label: 'Resolved',
-                    count: stats['resolved']!,
-                    color: AppTheme.successGreen,
-                    icon: Icons.check_circle_outline_rounded,
+                    label: 'Closed',
+                    count: stats['closed']!,
+                    color: const Color(0xFF6B7280),
+                    icon: Icons.archive_outlined,
                   ),
                 ],
               ),
@@ -98,7 +107,7 @@ class DashboardScreen extends StatelessWidget {
 
               // Pie chart
               if (stats['total']! > 0) ...[
-                SectionHeader(title: 'Distribusi Status'),
+                const SectionHeader(title: 'Distribusi Status'),
                 const SizedBox(height: 12),
                 _buildPieChart(context, stats),
                 const SizedBox(height: 24),
@@ -139,9 +148,7 @@ class DashboardScreen extends StatelessWidget {
     final data = [
       ('Open', stats['open']!, const Color(0xFF3B82F6)),
       ('Progress', stats['in_progress']!, AppTheme.accentAmber),
-      ('Resolved', stats['resolved']!, AppTheme.successGreen),
       ('Closed', stats['closed']!, const Color(0xFF6B7280)),
-      ('Pending', stats['pending']!, AppTheme.dangerRed),
     ];
     for (final item in data) {
       if (item.$2 > 0) {
