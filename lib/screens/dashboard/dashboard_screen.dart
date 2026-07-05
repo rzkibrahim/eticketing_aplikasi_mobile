@@ -80,13 +80,13 @@ class DashboardScreen extends StatelessWidget {
                   StatCard(
                     label: 'Total',
                     count: stats['total']!,
-                    color: AppTheme.primaryBlue,
+                    color: AppTheme.primaryGreen,
                     icon: Icons.confirmation_num_rounded,
                   ),
                   StatCard(
                     label: 'Open',
                     count: stats['open']!,
-                    color: const Color(0xFF3B82F6),
+                    color: const Color(0xFF1B8C3D),
                     icon: Icons.fiber_new_rounded,
                   ),
                   StatCard(
@@ -146,7 +146,7 @@ class DashboardScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sections = <PieChartSectionData>[];
     final data = [
-      ('Open', stats['open']!, const Color(0xFF3B82F6)),
+      ('Open', stats['open']!, const Color(0xFF1B8C3D)),
       ('Progress', stats['in_progress']!, AppTheme.accentAmber),
       ('Closed', stats['closed']!, const Color(0xFF6B7280)),
     ];

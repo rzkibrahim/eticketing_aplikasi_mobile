@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: UTS Mobile - E-Ticketing Helpdesk API
+  title: Aplikasi Mobile - E-Ticketing Helpdesk API
   description: >-
     Dokumentasi API untuk aplikasi E-Ticketing Helpdesk Mobile.
 

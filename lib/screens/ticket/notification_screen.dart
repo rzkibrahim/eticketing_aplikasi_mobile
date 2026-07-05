@@ -28,7 +28,7 @@ class NotificationScreen extends StatelessWidget {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryBlue,
+                  color: AppTheme.primaryGreen,
                 ),
               ),
             ),
@@ -87,10 +87,10 @@ class _NotificationItem extends StatelessWidget {
   Color _iconColor() {
     switch (notification.type) {
       case 'status_update': return AppTheme.accentAmber;
-      case 'new_comment': return AppTheme.primaryBlue;
+      case 'new_comment': return AppTheme.primaryGreen;
       case 'assigned': return AppTheme.purpleAccent;
       case 'resolved': return AppTheme.successGreen;
-      default: return AppTheme.accentCyan;
+      default: return AppTheme.accentOrange;
     }
   }
 
@@ -105,12 +105,12 @@ class _NotificationItem extends StatelessWidget {
         decoration: BoxDecoration(
           color: isUnread
               ? (isDark
-                  ? AppTheme.primaryBlue.withOpacity(0.12)
-                  : AppTheme.primaryBlue.withOpacity(0.05))
+                  ? AppTheme.primaryGreen.withOpacity(0.12)
+                  : AppTheme.primaryGreen.withOpacity(0.05))
               : (isDark ? AppTheme.darkCard : Colors.white),
           borderRadius: BorderRadius.circular(14),
           border: isUnread
-              ? Border.all(color: AppTheme.primaryBlue.withOpacity(0.25), width: 1.5)
+              ? Border.all(color: AppTheme.primaryGreen.withOpacity(0.25), width: 1.5)
               : Border.all(color: Colors.transparent),
           boxShadow: [
             BoxShadow(
@@ -150,7 +150,7 @@ class _NotificationItem extends StatelessWidget {
                         Container(
                           width: 8, height: 8,
                           decoration: const BoxDecoration(
-                            color: AppTheme.primaryBlue,
+                            color: AppTheme.primaryGreen,
                             shape: BoxShape.circle,
                           ),
                         ),

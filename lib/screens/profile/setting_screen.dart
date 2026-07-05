@@ -55,7 +55,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     trailing: Switch(
                       value: isDark,
                       onChanged: (_) => provider.toggleTheme(),
-                      activeThumbColor: AppTheme.primaryBlue,
+                      activeThumbColor: AppTheme.primaryGreen,
                     ),
                   ),
                   _divider(),
@@ -97,11 +97,11 @@ class _SettingScreenState extends State<SettingScreen> {
                     icon: Icons.notifications_active_rounded,
                     label: 'Push Notification',
                     subtitle: _notificationsEnabled ? 'Aktif' : 'Nonaktif',
-                    color: AppTheme.primaryBlue,
+                    color: AppTheme.primaryGreen,
                     trailing: Switch(
                       value: _notificationsEnabled,
                       onChanged: (v) => setState(() => _notificationsEnabled = v),
-                      activeThumbColor: AppTheme.primaryBlue,
+                      activeThumbColor: AppTheme.primaryGreen,
                     ),
                   ),
                   _divider(),
@@ -109,7 +109,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     icon: Icons.email_outlined,
                     label: 'Notifikasi Email',
                     subtitle: 'Kirim notifikasi via email',
-                    color: AppTheme.accentCyan,
+                    color: AppTheme.accentOrange,
                     trailing: Switch(
                       value: false,
                       onChanged: (_) {
@@ -122,7 +122,7 @@ class _SettingScreenState extends State<SettingScreen> {
                           ),
                         );
                       },
-                      activeThumbColor: AppTheme.accentCyan,
+                      activeThumbColor: AppTheme.accentOrange,
                     ),
                   ),
                 ],
@@ -189,7 +189,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     icon: Icons.language_rounded,
                     label: 'Bahasa Aplikasi',
                     subtitle: _selectedLanguage,
-                    color: AppTheme.primaryBlue,
+                    color: AppTheme.primaryGreen,
                     onTap: () => _showLanguageDialog(context),
                   ),
                   _divider(),
@@ -221,7 +221,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     icon: Icons.info_outline_rounded,
                     label: 'Tentang Aplikasi',
                     subtitle: 'E-Ticketing Helpdesk v2.0.0',
-                    color: AppTheme.primaryBlue,
+                    color: AppTheme.primaryGreen,
                     onTap: () => _showAbout(context),
                   ),
                   _divider(),
@@ -229,7 +229,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     icon: Icons.help_outline_rounded,
                     label: 'Pusat Bantuan',
                     subtitle: 'FAQ dan panduan pengguna',
-                    color: AppTheme.accentCyan,
+                    color: AppTheme.accentOrange,
                     onTap: () => _showHelpDialog(context),
                   ),
                   _divider(),
@@ -481,7 +481,7 @@ class _SettingScreenState extends State<SettingScreen> {
           children: languages.map((lang) => ListTile(
             title: Text(lang, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
             trailing: _selectedLanguage == lang
-                ? const Icon(Icons.check_circle_rounded, color: AppTheme.primaryBlue)
+                ? const Icon(Icons.check_circle_rounded, color: AppTheme.primaryGreen)
                 : null,
             onTap: () {
               setState(() => _selectedLanguage = lang);
@@ -545,7 +545,7 @@ class _SettingScreenState extends State<SettingScreen> {
         height: 60,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [AppTheme.primaryBlue, AppTheme.primaryDark],
+            colors: [AppTheme.primaryGreen, AppTheme.primaryDark],
           ),
           borderRadius: BorderRadius.circular(14),
         ),

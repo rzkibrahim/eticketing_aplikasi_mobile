@@ -404,9 +404,9 @@ class AvatarWidget extends StatelessWidget {
     if (role == 'admin') {
       bgColor = AppTheme.purpleAccent;
     } else if (role == 'helpdesk') {
-      bgColor = AppTheme.accentCyan;
+      bgColor = AppTheme.accentOrange;
     } else {
-      bgColor = AppTheme.primaryBlue;
+      bgColor = AppTheme.primaryGreen;
     }
 
     return Container(
@@ -449,7 +449,7 @@ class CategoryIcon extends StatelessWidget {
       ),
       child: Icon(
         AppHelpers.categoryIcon(category),
-        color: AppTheme.primaryBlue,
+        color: AppTheme.primaryGreen,
         size: 20,
       ),
     );
@@ -507,14 +507,14 @@ class GradientHeader extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppTheme.primaryBlue, AppTheme.primaryDark],
+          colors: [AppTheme.primaryGreen, AppTheme.primaryDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryBlue.withOpacity(0.3),
+            color: AppTheme.primaryGreen.withOpacity(0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -603,7 +603,7 @@ class SectionHeader extends StatelessWidget {
               action!,
               style: const TextStyle(
                 fontSize: 12,
-                color: AppTheme.primaryBlue,
+                color: AppTheme.primaryGreen,
                 fontWeight: FontWeight.w600,
               ),
             ),

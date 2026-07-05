@@ -51,10 +51,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue.withOpacity(0.1),
+                    color: AppTheme.primaryGreen.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.photo_library_rounded, color: AppTheme.primaryBlue),
+                  child: const Icon(Icons.photo_library_rounded, color: AppTheme.primaryGreen),
                 ),
                 title: Text('Galeri', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
                 subtitle: Text('Pilih dari galeri foto', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey)),
@@ -64,10 +64,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.accentCyan.withOpacity(0.1),
+                    color: AppTheme.accentOrange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.camera_alt_rounded, color: AppTheme.accentCyan),
+                  child: const Icon(Icons.camera_alt_rounded, color: AppTheme.accentOrange),
                 ),
                 title: Text('Kamera', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
                 subtitle: Text('Ambil foto baru', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey)),
@@ -234,7 +234,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
               controller: _tabController,
               indicator: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: AppTheme.primaryBlue,
+                color: AppTheme.primaryGreen,
               ),
               indicatorSize: TabBarIndicatorSize.tab,
               labelColor: Colors.white,
@@ -325,10 +325,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
                                 child: Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryBlue.withOpacity(0.1),
+                                    color: AppTheme.primaryGreen.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: const Icon(Icons.add_photo_alternate_rounded, color: AppTheme.primaryBlue, size: 20),
+                                  child: const Icon(Icons.add_photo_alternate_rounded, color: AppTheme.primaryGreen, size: 20),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -350,7 +350,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
                                 child: Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryBlue,
+                                    color: AppTheme.primaryGreen,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: _sendingComment
@@ -502,10 +502,10 @@ class _CommentBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final roleColor = comment.authorRole == 'helpdesk'
-        ? AppTheme.accentCyan
+        ? AppTheme.accentOrange
         : comment.authorRole == 'admin'
             ? AppTheme.purpleAccent
-            : AppTheme.primaryBlue;
+            : AppTheme.primaryGreen;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -545,7 +545,7 @@ class _CommentBubble extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: isMe
-                        ? AppTheme.primaryBlue
+                        ? AppTheme.primaryGreen
                         : isDark ? AppTheme.darkSurface : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(14),
@@ -582,8 +582,8 @@ class _HistoryItem extends StatelessWidget {
     Color roleColor;
     switch (history.performedByRole) {
       case 'admin': roleColor = AppTheme.purpleAccent; break;
-      case 'helpdesk': roleColor = AppTheme.accentCyan; break;
-      default: roleColor = AppTheme.primaryBlue;
+      case 'helpdesk': roleColor = AppTheme.accentOrange; break;
+      default: roleColor = AppTheme.primaryGreen;
     }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,7 +630,7 @@ class _TrackingTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final stages = [
-      _TrackingStage('Open', 'Tiket telah dibuat dan menunggu ditangani', Icons.fiber_new_rounded, const Color(0xFF3B82F6)),
+      _TrackingStage('Open', 'Tiket telah dibuat dan menunggu ditangani', Icons.fiber_new_rounded, const Color(0xFF1B8C3D)),
       _TrackingStage('In Progress', 'Helpdesk sedang menangani tiket', Icons.pending_actions_rounded, AppTheme.accentAmber),
       _TrackingStage('Closed', 'Tiket telah diselesaikan', Icons.check_circle_rounded, AppTheme.successGreen),
     ];

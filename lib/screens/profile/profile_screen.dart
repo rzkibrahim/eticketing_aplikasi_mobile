@@ -20,15 +20,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _phoneCtrl;
   late TextEditingController _deptCtrl;
   final _formKey = GlobalKey<FormState>();
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
-    final user = context.read<AppProvider>().currentUser!;
-    _nameCtrl = TextEditingController(text: user.name);
-    _emailCtrl = TextEditingController(text: user.email);
-    _phoneCtrl = TextEditingController(text: user.phone);
-    _deptCtrl = TextEditingController(text: user.department);
+    _nameCtrl = TextEditingController();
+    _emailCtrl = TextEditingController();
+    _phoneCtrl = TextEditingController();
+    _deptCtrl = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      final user = context.read<AppProvider>().currentUser;
+      if (user != null) {
+        _nameCtrl.text = user.name;
+        _emailCtrl.text = user.email;
+        _phoneCtrl.text = user.phone;
+        _deptCtrl.text = user.department;
+        _initialized = true;
+      }
+    }
   }
 
   @override
@@ -104,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 'Simpan',
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryBlue,
+                  color: AppTheme.primaryGreen,
                 ),
               ),
             ),
@@ -120,14 +135,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [AppTheme.primaryBlue, AppTheme.primaryDark],
+                  colors: [AppTheme.primaryGreen, AppTheme.primaryDark],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryBlue.withOpacity(0.35),
+                    color: AppTheme.primaryGreen.withOpacity(0.35),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -198,11 +213,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (user.role == 'user') ...[
               Row(
                 children: [
-                  _miniStat('Tiket Saya', stats['total']!, AppTheme.primaryBlue),
+                  _miniStat('Tiket Saya', stats['total'] ?? 0, AppTheme.primaryGreen),
                   const SizedBox(width: 10),
-                  _miniStat('Selesai', stats['resolved']!, AppTheme.successGreen),
+                  _miniStat('Selesai', stats['closed'] ?? 0, AppTheme.successGreen),
                   const SizedBox(width: 10),
-                  _miniStat('Proses', stats['in_progress']!, AppTheme.accentAmber),
+                  _miniStat('Proses', stats['in_progress'] ?? 0, AppTheme.accentAmber),
                 ],
               ),
               const SizedBox(height: 20),
@@ -234,7 +249,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: _settingTile(
                 icon: Icons.settings_rounded,
                 label: 'Pengaturan',
-                color: AppTheme.primaryBlue,
+                color: AppTheme.primaryGreen,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const SettingScreen()),
@@ -309,10 +324,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withOpacity(0.08),
+              color: AppTheme.primaryGreen.withOpacity(0.08),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 16, color: AppTheme.primaryBlue),
+            child: Icon(icon, size: 16, color: AppTheme.primaryGreen),
           ),
           const SizedBox(width: 14),
           Column(

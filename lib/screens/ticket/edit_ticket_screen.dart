@@ -107,7 +107,7 @@ class _EditTicketScreenState extends State<EditTicketScreen> {
                     )),
                     selected: selected,
                     onSelected: (_) => setState(() => _category = cat),
-                    selectedColor: AppTheme.primaryBlue,
+                    selectedColor: AppTheme.primaryGreen,
                     showCheckmark: false,
                   );
                 }).toList(),

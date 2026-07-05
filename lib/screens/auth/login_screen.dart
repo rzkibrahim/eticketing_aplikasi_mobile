@@ -108,12 +108,12 @@ class _LoginScreenState extends State<LoginScreen>
                       height: 80,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [AppTheme.primaryBlue, AppTheme.primaryDark],
+                          colors: [AppTheme.primaryGreen, AppTheme.primaryDark],
                         ),
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primaryBlue.withOpacity(0.4),
+                            color: AppTheme.primaryGreen.withOpacity(0.4),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
@@ -145,16 +145,16 @@ class _LoginScreenState extends State<LoginScreen>
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryBlue.withOpacity(0.08),
+                        color: AppTheme.primaryGreen.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.2)),
+                        border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.2)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Demo Akun:', style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w700, fontSize: 12,
-                            color: AppTheme.primaryBlue,
+                            color: AppTheme.primaryGreen,
                           )),
                           const SizedBox(height: 6),
                           _demoRow('User', 'budi / 123456'),
@@ -203,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 'Lupa Password?',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.primaryBlue,
+                                  color: AppTheme.primaryGreen,
                                 ),
                               ),
                             ),
@@ -240,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 child: Text(
                                   'Daftar Sekarang',
                                   style: GoogleFonts.plusJakartaSans(
-                                    color: AppTheme.primaryBlue,
+                                    color: AppTheme.primaryGreen,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),

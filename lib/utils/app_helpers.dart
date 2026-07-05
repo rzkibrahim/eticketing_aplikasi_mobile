@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 class AppHelpers {
   static Color statusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'open': return const Color(0xFF3B82F6);
+      case 'open': return const Color(0xFF1B8C3D);
       case 'in progress': return const Color(0xFFF59E0B);
       case 'closed': return const Color(0xFF6B7280);
       default: return const Color(0xFF94A3B8);

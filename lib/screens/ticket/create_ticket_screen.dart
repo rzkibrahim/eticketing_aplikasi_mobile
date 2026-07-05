@@ -49,10 +49,10 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue.withOpacity(0.1),
+                    color: AppTheme.primaryGreen.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.photo_library_rounded, color: AppTheme.primaryBlue),
+                  child: const Icon(Icons.photo_library_rounded, color: AppTheme.primaryGreen),
                 ),
                 title: Text('Galeri', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
                 subtitle: Text('Pilih dari galeri foto', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey)),
@@ -62,10 +62,10 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.accentCyan.withOpacity(0.1),
+                    color: AppTheme.accentOrange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.camera_alt_rounded, color: AppTheme.accentCyan),
+                  child: const Icon(Icons.camera_alt_rounded, color: AppTheme.accentOrange),
                 ),
                 title: Text('Kamera', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
                 subtitle: Text('Ambil foto baru', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey)),
@@ -163,7 +163,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                     )),
                     selected: selected,
                     onSelected: (_) => setState(() => _category = cat),
-                    selectedColor: AppTheme.primaryBlue,
+                    selectedColor: AppTheme.primaryGreen,
                     showCheckmark: false,
                   );
                 }).toList(),
@@ -237,12 +237,12 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                         ? AppTheme.darkSurface 
                         : AppTheme.lightSurface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.3)),
+                    border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.3)),
                   ),
                   child: _attachment == null
                       ? Column(
                           children: [
-                            const Icon(Icons.add_photo_alternate_outlined, color: AppTheme.primaryBlue, size: 32),
+                            const Icon(Icons.add_photo_alternate_outlined, color: AppTheme.primaryGreen, size: 32),
                             const SizedBox(height: 8),
                             Text('Ketuk untuk memilih foto dari galeri',
                                 style: GoogleFonts.plusJakartaSans(

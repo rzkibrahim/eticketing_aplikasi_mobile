@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Brand Colors
-  static const Color primaryBlue = Color(0xFF1A56DB);
-  static const Color primaryDark = Color(0xFF1E3A8A);
-  static const Color accentCyan = Color(0xFF06B6D4);
+  // Brand Colors — 7-Eleven Inspired (Hijau, Oren, Putih)
+  static const Color primaryGreen = Color(0xFF1B8C3D);
+  static const Color primaryDark = Color(0xFF0F6B2D);
+  static const Color accentOrange = Color(0xFFF57C20);
   static const Color accentAmber = Color(0xFFF59E0B);
   static const Color successGreen = Color(0xFF10B981);
   static const Color dangerRed = Color(0xFFEF4444);
@@ -13,23 +13,23 @@ class AppTheme {
   static const Color purpleAccent = Color(0xFF8B5CF6);
 
   // Light theme surfaces
-  static const Color lightBg = Color(0xFFF0F4FF);
+  static const Color lightBg = Color(0xFFF5F7F5);
   static const Color lightCard = Color(0xFFFFFFFF);
-  static const Color lightSurface = Color(0xFFE8EEFF);
+  static const Color lightSurface = Color(0xFFE8F5E9);
 
   // Dark theme surfaces
-  static const Color darkBg = Color(0xFF0F1729);
-  static const Color darkCard = Color(0xFF1A2540);
-  static const Color darkSurface = Color(0xFF243055);
+  static const Color darkBg = Color(0xFF0A2E14);
+  static const Color darkCard = Color(0xFF1A3A24);
+  static const Color darkSurface = Color(0xFF244030);
 
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: primaryBlue,
+      seedColor: primaryGreen,
       brightness: Brightness.light,
-      primary: primaryBlue,
-      secondary: accentCyan,
+      primary: primaryGreen,
+      secondary: accentOrange,
       surface: lightCard,
     ),
     scaffoldBackgroundColor: lightBg,
@@ -55,7 +55,7 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: primaryBlue,
+        backgroundColor: primaryGreen,
         foregroundColor: Colors.white,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -75,11 +75,11 @@ class AppTheme {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.blue.shade100, width: 1.5),
+        borderSide: BorderSide(color: Colors.green.shade100, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: primaryBlue, width: 2),
+        borderSide: const BorderSide(color: primaryGreen, width: 2),
       ),
       labelStyle: GoogleFonts.plusJakartaSans(
         color: const Color(0xFF64748B),
@@ -93,10 +93,10 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.dark,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: primaryBlue,
+      seedColor: primaryGreen,
       brightness: Brightness.dark,
-      primary: const Color(0xFF60A5FA),
-      secondary: accentCyan,
+      primary: const Color(0xFF66BB6A),
+      secondary: accentOrange,
       surface: darkCard,
     ),
     scaffoldBackgroundColor: darkBg,
@@ -121,7 +121,7 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF3B82F6),
+        backgroundColor: const Color(0xFF2E7D32),
         foregroundColor: Colors.white,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -141,11 +141,11 @@ class AppTheme {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.blue.shade900, width: 1.5),
+        borderSide: BorderSide(color: Colors.green.shade900, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF60A5FA), width: 2),
+        borderSide: const BorderSide(color: Color(0xFF66BB6A), width: 2),
       ),
       labelStyle: GoogleFonts.plusJakartaSans(
         color: const Color(0xFF94A3B8),

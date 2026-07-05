@@ -106,8 +106,8 @@ class _TicketListScreenState extends State<TicketListScreen> {
                     ),
                     selected: selected,
                     onSelected: (_) => setState(() => _filterStatus = s),
-                    backgroundColor: selected ? AppTheme.primaryBlue : null,
-                    selectedColor: AppTheme.primaryBlue,
+                    backgroundColor: selected ? AppTheme.primaryGreen : null,
+                    selectedColor: AppTheme.primaryGreen,
                     showCheckmark: false,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                   ),
@@ -157,7 +157,7 @@ class _TicketListScreenState extends State<TicketListScreen> {
                   MaterialPageRoute(builder: (_) => const CreateTicketScreen())),
               icon: const Icon(Icons.add_rounded),
               label: Text('Buat Tiket', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
-              backgroundColor: AppTheme.primaryBlue,
+              backgroundColor: AppTheme.primaryGreen,
               foregroundColor: Colors.white,
             )
           : null,
@@ -198,7 +198,7 @@ class _TicketListItem extends StatelessWidget {
                         ticket.id,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11, fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryBlue),
+                          color: AppTheme.primaryGreen),
                       ),
                       Text(
                         ticket.title,

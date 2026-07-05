@@ -105,7 +105,7 @@ class _AdminScreenState extends State<AdminScreen>
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppTheme.primaryBlue, AppTheme.primaryDark],
+                    colors: [AppTheme.primaryGreen, AppTheme.primaryDark],
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -191,7 +191,7 @@ class _AdminScreenState extends State<AdminScreen>
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 child: Row(
                   children: [
-                    _ticketSummaryChip('Open', stats['open']!, const Color(0xFF3B82F6)),
+                    _ticketSummaryChip('Open', stats['open']!, const Color(0xFF1B8C3D)),
                     const SizedBox(width: 6),
                     _ticketSummaryChip('Progress', stats['in_progress']!, AppTheme.accentAmber),
                     const SizedBox(width: 6),
@@ -277,7 +277,7 @@ class _AdminScreenState extends State<AdminScreen>
           _tabController.index == 0 ? 'Tambah User' : 'Buat Tiket',
           style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: AppTheme.primaryBlue,
+        backgroundColor: AppTheme.primaryGreen,
         foregroundColor: Colors.white,
       ),
     );
@@ -585,8 +585,8 @@ class _UserCard extends StatelessWidget {
     String roleLabel;
     switch (user.role) {
       case 'admin': roleColor = AppTheme.purpleAccent; roleLabel = 'Admin'; break;
-      case 'helpdesk': roleColor = AppTheme.accentCyan; roleLabel = 'Helpdesk'; break;
-      default: roleColor = AppTheme.primaryBlue; roleLabel = 'User';
+      case 'helpdesk': roleColor = AppTheme.accentOrange; roleLabel = 'Helpdesk'; break;
+      default: roleColor = AppTheme.primaryGreen; roleLabel = 'User';
     }
 
     return Container(
@@ -637,7 +637,7 @@ class _UserCard extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.edit_outlined, size: 18),
                 onPressed: onEdit,
-                color: AppTheme.primaryBlue,
+                color: AppTheme.primaryGreen,
                 visualDensity: VisualDensity.compact,
               ),
               IconButton(
@@ -692,7 +692,7 @@ class _AdminTicketCard extends StatelessWidget {
                     children: [
                       Text(ticket.id,
                           style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10, color: AppTheme.primaryBlue, fontWeight: FontWeight.w700)),
+                              fontSize: 10, color: AppTheme.primaryGreen, fontWeight: FontWeight.w700)),
                       Text(ticket.title,
                           style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13),
                           maxLines: 1, overflow: TextOverflow.ellipsis),

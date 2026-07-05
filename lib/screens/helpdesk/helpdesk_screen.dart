@@ -89,7 +89,7 @@ class _HelpdeskScreenState extends State<HelpdeskScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue,
+                      color: AppTheme.primaryGreen,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text('${myTickets.length}',
@@ -129,12 +129,12 @@ class _HelpdeskScreenState extends State<HelpdeskScreen>
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppTheme.accentCyan, Color(0xFF0891B2)],
+                colors: [AppTheme.accentOrange, Color(0xFFD4651A)],
               ),
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.accentCyan.withOpacity(0.3),
+                  color: AppTheme.accentOrange.withOpacity(0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -249,7 +249,7 @@ class _HelpdeskScreenState extends State<HelpdeskScreen>
         icon: const Icon(Icons.add_rounded),
         label: Text('Buat Tiket',
             style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-        backgroundColor: AppTheme.accentCyan,
+        backgroundColor: AppTheme.accentOrange,
         foregroundColor: Colors.white,
       ),
     );
@@ -315,7 +315,7 @@ class _HelpdeskTicketCard extends StatelessWidget {
                     children: [
                       Text(ticket.id,
                           style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10, color: AppTheme.primaryBlue, fontWeight: FontWeight.w700)),
+                              fontSize: 10, color: AppTheme.primaryGreen, fontWeight: FontWeight.w700)),
                       Text(ticket.title,
                           style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
