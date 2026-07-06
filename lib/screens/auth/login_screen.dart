@@ -83,17 +83,21 @@ class _LoginScreenState extends State<LoginScreen>
 
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: isDark
-                ? [AppTheme.darkBg, const Color(0xFF0F2044)]
-                : [AppTheme.lightBg, const Color(0xFFDBEAFF)],
+                ? [AppTheme.darkBg, const Color(0xFF0A2E14)] // updated dark end color with green theme
+                : [AppTheme.lightBg, const Color(0xFFC8E6C9)], // updated light end color with soft green theme
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
         child: SafeArea(
+          bottom: false, // let gradient flow to the very bottom
           child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
             child: FadeTransition(
               opacity: _fadeAnim,

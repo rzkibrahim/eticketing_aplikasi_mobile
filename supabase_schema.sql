@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS tickets (
   description TEXT NOT NULL,
   category TEXT NOT NULL,
   priority TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
-  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in progress', 'closed')),
+  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in progress', 'resolved', 'closed', 'pending')),
   created_by_id UUID REFERENCES users(id) ON DELETE SET NULL,
   created_by_name TEXT NOT NULL,
   assigned_to_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -118,8 +118,8 @@ INSERT INTO users (id, name, email, username, password, role, department, avatar
 INSERT INTO tickets (id, title, description, category, priority, status, created_by_id, created_by_name, assigned_to_id, assigned_to_name, created_at, updated_at) VALUES
   ('TKT-001', 'Laptop tidak bisa menyala', 'Laptop saya tiba-tiba tidak mau menyala setelah update Windows kemarin. Sudah dicoba restart tapi tetap tidak bisa.', 'Hardware', 'high', 'in progress', '33333333-0000-0000-0000-000000000001', 'Budi Santoso', '22222222-0000-0000-0000-000000000001', 'Rizky Prasetyo', now() - interval '2 days 3 hours', now() - interval '5 hours'),
   ('TKT-002', 'Email tidak bisa terkirim', 'Saat mencoba mengirim email ke klien, selalu muncul error "SMTP connection failed". Ini sudah berlangsung sejak 2 hari lalu.', 'Software', 'medium', 'open', '33333333-0000-0000-0000-000000000002', 'Siti Rahayu', NULL, NULL, now() - interval '1 day', now() - interval '1 day'),
-  ('TKT-003', 'Printer offline di lantai 3', 'Printer Canon IP2770 di ruang Marketing lantai 3 menampilkan status offline dan tidak bisa digunakan.', 'Hardware', 'low', 'closed', '33333333-0000-0000-0000-000000000003', 'Andi Wijaya', '22222222-0000-0000-0000-000000000002', 'Dewi Kusuma', now() - interval '5 days', now() - interval '1 day'),
-  ('TKT-004', 'Akses VPN gagal', 'Tidak bisa terhubung ke VPN perusahaan saat bekerja dari rumah. Error yang muncul: "Authentication failed".', 'Network', 'high', 'open', '33333333-0000-0000-0000-000000000001', 'Budi Santoso', NULL, NULL, now() - interval '6 hours', now() - interval '6 hours'),
+  ('TKT-003', 'Printer offline di lantai 3', 'Printer Canon IP2770 di ruang Marketing lantai 3 menampilkan status offline dan tidak bisa digunakan.', 'Hardware', 'low', 'resolved', '33333333-0000-0000-0000-000000000003', 'Andi Wijaya', '22222222-0000-0000-0000-000000000002', 'Dewi Kusuma', now() - interval '5 days', now() - interval '1 day'),
+  ('TKT-004', 'Akses VPN gagal', 'Tidak bisa terhubung ke VPN perusahaan saat bekerja dari rumah. Error yang muncul: "Authentication failed".', 'Network', 'high', 'pending', '33333333-0000-0000-0000-000000000001', 'Budi Santoso', NULL, NULL, now() - interval '6 hours', now() - interval '6 hours'),
   ('TKT-005', 'Software akuntansi crash', 'Aplikasi Accurate versi terbaru sering crash ketika membuka laporan bulanan. Sudah coba reinstall tapi masalah tetap ada.', 'Software', 'high', 'closed', '33333333-0000-0000-0000-000000000002', 'Siti Rahayu', '22222222-0000-0000-0000-000000000001', 'Rizky Prasetyo', now() - interval '10 days', now() - interval '7 days'),
   ('TKT-006', 'Monitor berkedip-kedip', 'Monitor di meja saya berkedip-kedip sejak kemarin. Sudah ganti kabel tapi masih sama.', 'Hardware', 'medium', 'open', '33333333-0000-0000-0000-000000000003', 'Andi Wijaya', NULL, NULL, now() - interval '12 hours', now() - interval '12 hours');
 
@@ -138,7 +138,7 @@ INSERT INTO ticket_history (ticket_id, action, performed_by, performed_by_role, 
   ('TKT-001', 'Status diubah menjadi In Progress', 'Rizky Prasetyo', 'helpdesk', now() - interval '10 hours'),
   ('TKT-002', 'Tiket dibuat', 'Siti Rahayu', 'user', now() - interval '1 day'),
   ('TKT-003', 'Tiket dibuat', 'Andi Wijaya', 'user', now() - interval '5 days'),
-  ('TKT-003', 'Tiket diselesaikan dan ditutup', 'Dewi Kusuma', 'helpdesk', now() - interval '1 day'),
+  ('TKT-003', 'Status diubah menjadi Resolved', 'Dewi Kusuma', 'helpdesk', now() - interval '1 day'),
   ('TKT-004', 'Tiket dibuat', 'Budi Santoso', 'user', now() - interval '6 hours'),
   ('TKT-005', 'Tiket dibuat', 'Siti Rahayu', 'user', now() - interval '10 days'),
   ('TKT-005', 'Status diubah menjadi Closed', 'Admin Utama', 'admin', now() - interval '7 days'),
@@ -149,3 +149,32 @@ INSERT INTO notifications (title, body, ticket_id, type, is_read, user_id, creat
   ('Tiket TKT-001 diperbarui', 'Status tiket "Laptop tidak bisa menyala" diubah menjadi In Progress', 'TKT-001', 'status_update', false, '33333333-0000-0000-0000-000000000001', now() - interval '10 hours'),
   ('Komentar baru di TKT-001', 'Rizky Prasetyo menambahkan komentar pada tiket Anda', 'TKT-001', 'new_comment', false, '33333333-0000-0000-0000-000000000001', now() - interval '8 hours'),
   ('Tiket TKT-003 diselesaikan', 'Tiket "Printer offline di lantai 3" telah diselesaikan', 'TKT-003', 'resolved', true, '33333333-0000-0000-0000-000000000003', now() - interval '1 day');
+
+
+ALTER TABLE tickets ADD COLUMN attachment_url TEXT;
+
+ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT true;
+
+ALTER TABLE ticket_history ADD COLUMN performed_by_id UUID REFERENCES users(id) ON DELETE SET NULL;
+
+CREATE OR REPLACE FUNCTION update_modified_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_ticket_modtime
+    BEFORE UPDATE ON tickets
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_modified_column();
+
+
+-- Update existing tickets with old statuses
+UPDATE tickets SET status = 'closed' WHERE status = 'resolved';
+UPDATE tickets SET status = 'open' WHERE status = 'pending';
+-- Drop old constraint and add new one
+ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_status_check;
+ALTER TABLE tickets ADD CONSTRAINT tickets_status_check
+  CHECK (status IN ('open', 'in progress', 'closed'));
