@@ -178,6 +178,22 @@ class _AdminScreenState extends State<AdminScreen>
                           isDark: isDark,
                           onDelete: () => _confirmDeleteUser(context, users[i]),
                           onEdit: () => _showEditUserDialog(context, users[i]),
+                          onToggleActive: () async {
+                            await context.read<AppProvider>().toggleUserActive(users[i].id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  users[i].isActive
+                                      ? 'Pengguna ${users[i].name} dinonaktifkan!'
+                                      : 'Pengguna ${users[i].name} diaktifkan!',
+                                  style: GoogleFonts.plusJakartaSans(),
+                                ),
+                                backgroundColor: users[i].isActive ? AppTheme.dangerRed : AppTheme.successGreen,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                          },
                         ),
                       ),
               ),
@@ -571,12 +587,14 @@ class _UserCard extends StatelessWidget {
   final bool isDark;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final VoidCallback onToggleActive;
 
   const _UserCard({
     required this.user,
     required this.isDark,
     required this.onDelete,
     required this.onEdit,
+    required this.onToggleActive,
   });
 
   @override
@@ -624,6 +642,17 @@ class _UserCard extends StatelessWidget {
                               fontSize: 10, fontWeight: FontWeight.w700, color: roleColor)),
                     ),
                     const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: (user.isActive ? AppTheme.successGreen : AppTheme.dangerRed).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(user.isActive ? 'Aktif' : 'Nonaktif',
+                          style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10, fontWeight: FontWeight.w700, color: user.isActive ? AppTheme.successGreen : AppTheme.dangerRed)),
+                    ),
+                    const SizedBox(width: 6),
                     Text(user.department,
                         style: GoogleFonts.plusJakartaSans(
                             fontSize: 10, color: Colors.grey.shade500)),
@@ -634,6 +663,13 @@ class _UserCard extends StatelessWidget {
           ),
           Column(
             children: [
+              IconButton(
+                icon: Icon(user.isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded, size: 18),
+                onPressed: onToggleActive,
+                color: user.isActive ? AppTheme.dangerRed : AppTheme.successGreen,
+                tooltip: user.isActive ? 'Nonaktifkan' : 'Aktifkan',
+                visualDensity: VisualDensity.compact,
+              ),
               IconButton(
                 icon: const Icon(Icons.edit_outlined, size: 18),
                 onPressed: onEdit,

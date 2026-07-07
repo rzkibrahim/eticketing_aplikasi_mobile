@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../models/ticket_model.dart';
 import '../models/notification_model.dart';
 import '../services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppProvider extends ChangeNotifier {
   UserModel? _currentUser;
@@ -88,6 +90,7 @@ class AppProvider extends ChangeNotifier {
   // AUTH
   // ============================================================
   Future<bool> login(String username, String password) async {
+    _error = null;
     try {
       final data = await _client
           .from('users')
@@ -97,7 +100,12 @@ class AppProvider extends ChangeNotifier {
           .maybeSingle();
 
       if (data != null) {
-        _currentUser = UserModel.fromJson(data);
+        final user = UserModel.fromJson(data);
+        if (!user.isActive) {
+          _error = 'Akun Anda telah dinonaktifkan. Hubungi admin.';
+          return false;
+        }
+        _currentUser = user;
         await loadData();
         notifyListeners();
         return true;
@@ -146,12 +154,13 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> resetPassword(String email, String newPassword) async {
+  Future<bool> resetPassword(String name, String email, String newPassword) async {
     try {
       final data = await _client
           .from('users')
           .select('id')
           .eq('email', email)
+          .eq('name', name)
           .maybeSingle();
 
       if (data == null) return false;
@@ -189,6 +198,21 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> toggleUserActive(String userId) async {
+    try {
+      final user = _users.firstWhere((u) => u.id == userId);
+      final newStatus = !user.isActive;
+      await _client.from('users').update({
+        'is_active': newStatus,
+      }).eq('id', userId);
+
+      await _loadUsers();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Toggle user active error: $e');
+    }
+  }
+
   // ============================================================
   // TICKETS
   // ============================================================
@@ -222,11 +246,29 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  Future<String?> uploadFile(File file, String ticketId) async {
+    try {
+      final fileName = '${ticketId}_${DateTime.now().millisecondsSinceEpoch}.${file.path.split('.').last}';
+      final bytes = await file.readAsBytes();
+      await _client.storage.from('ticket-attachments').uploadBinary(
+        fileName,
+        bytes,
+        fileOptions: FileOptions(cacheControl: '3600', upsert: false),
+      );
+      final url = _client.storage.from('ticket-attachments').getPublicUrl(fileName);
+      return url;
+    } catch (e) {
+      debugPrint('Upload file error: $e');
+      return null;
+    }
+  }
+
   Future<void> createTicket({
     required String title,
     required String description,
     required String category,
     required String priority,
+    File? attachment,
   }) async {
     if (_currentUser == null) return;
     try {
@@ -235,7 +277,13 @@ class AppProvider extends ChangeNotifier {
       final ticketNumber = countData.length + 1;
       final id = 'TKT-${ticketNumber.toString().padLeft(3, '0')}';
 
-      await _client.from('tickets').insert({
+      // Upload attachment if provided
+      String? attachmentUrl;
+      if (attachment != null) {
+        attachmentUrl = await uploadFile(attachment, id);
+      }
+
+      final insertData = <String, dynamic>{
         'id': id,
         'title': title,
         'description': description,
@@ -244,7 +292,12 @@ class AppProvider extends ChangeNotifier {
         'status': 'open',
         'created_by_id': _currentUser!.id,
         'created_by_name': _currentUser!.name,
-      });
+      };
+      if (attachmentUrl != null) {
+        insertData['attachment_url'] = attachmentUrl;
+      }
+
+      await _client.from('tickets').insert(insertData);
 
       // Add history
       await _client.from('ticket_history').insert({

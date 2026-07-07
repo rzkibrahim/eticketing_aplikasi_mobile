@@ -13,6 +13,7 @@ class ResetPasswordScreen extends StatefulWidget {
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _newPasswordCtrl = TextEditingController();
   bool _obscure = true;
@@ -20,6 +21,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   void dispose() {
+    _nameCtrl.dispose();
     _emailCtrl.dispose();
     _newPasswordCtrl.dispose();
     super.dispose();
@@ -31,6 +33,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
     final success = await context.read<AppProvider>().resetPassword(
+      _nameCtrl.text.trim(),
       _emailCtrl.text.trim(),
       _newPasswordCtrl.text,
     );
@@ -48,7 +51,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Email tidak ditemukan!', style: GoogleFonts.plusJakartaSans()),
+          content: Text('Nama atau Email tidak cocok/ditemukan!', style: GoogleFonts.plusJakartaSans()),
           backgroundColor: AppTheme.dangerRed,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -88,7 +91,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Masukkan email terdaftar Anda dan password baru',
+                        'Masukkan nama, email terdaftar Anda dan password baru',
                         style: GoogleFonts.plusJakartaSans(fontSize: 13),
                       ),
                     ),
@@ -96,6 +99,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 28),
+              TextFormField(
+                controller: _nameCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Lengkap',
+                  prefixIcon: Icon(Icons.person_outline_rounded),
+                ),
+                validator: (v) {
+                  if (v!.isEmpty) return 'Nama lengkap diperlukan';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,

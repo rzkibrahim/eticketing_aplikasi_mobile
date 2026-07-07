@@ -451,7 +451,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 );
                 return;
               }
-              await context.read<AppProvider>().resetPassword(user.email, newCtrl.text);
+              await context.read<AppProvider>().resetPassword(user.name, user.email, newCtrl.text);
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

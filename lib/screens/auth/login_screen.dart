@@ -53,7 +53,8 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
-    final success = await context.read<AppProvider>().login(
+    final provider = context.read<AppProvider>();
+    final success = await provider.login(
       _usernameCtrl.text.trim(),
       _passwordCtrl.text,
     );
@@ -63,10 +64,11 @@ class _LoginScreenState extends State<LoginScreen>
         MaterialPageRoute(builder: (_) => const MainScreen()),
       );
     } else {
+      final errorMsg = provider.error ?? 'Username atau password salah!';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Username atau password salah!',
+            errorMsg,
             style: GoogleFonts.plusJakartaSans(),
           ),
           backgroundColor: AppTheme.dangerRed,

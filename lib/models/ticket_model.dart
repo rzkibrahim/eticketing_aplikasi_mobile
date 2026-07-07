@@ -91,6 +91,7 @@ class TicketModel {
   final String? assignedToName;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? attachmentUrl;
   final List<String> attachments;
   final List<CommentModel> comments;
   final List<TicketHistoryModel> history;
@@ -108,6 +109,7 @@ class TicketModel {
     this.assignedToName,
     required this.createdAt,
     required this.updatedAt,
+    this.attachmentUrl,
     this.attachments = const [],
     this.comments = const [],
     this.history = const [],
@@ -130,6 +132,7 @@ class TicketModel {
       assignedToName: json['assigned_to_name'],
       createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(json['updated_at'] ?? DateTime.now().toIso8601String()),
+      attachmentUrl: json['attachment_url'],
       comments: comments,
       history: history,
     );
@@ -160,6 +163,7 @@ class TicketModel {
     String? assignedToId,
     String? assignedToName,
     DateTime? updatedAt,
+    String? attachmentUrl,
     List<String>? attachments,
     List<CommentModel>? comments,
     List<TicketHistoryModel>? history,
@@ -177,6 +181,7 @@ class TicketModel {
       assignedToName: assignedToName ?? this.assignedToName,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      attachmentUrl: attachmentUrl ?? this.attachmentUrl,
       attachments: attachments ?? this.attachments,
       comments: comments ?? this.comments,
       history: history ?? this.history,

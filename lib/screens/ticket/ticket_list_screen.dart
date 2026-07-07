@@ -19,7 +19,7 @@ class _TicketListScreenState extends State<TicketListScreen> {
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
 
-  final statuses = ['all', 'open', 'in progress', 'resolved', 'closed', 'pending'];
+  final statuses = ['all', 'open', 'in progress', 'closed'];
 
   @override
   void dispose() {

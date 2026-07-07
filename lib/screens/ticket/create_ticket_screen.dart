@@ -110,6 +110,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
       description: _descCtrl.text.trim(),
       category: _category,
       priority: _priority,
+      attachment: _attachment,
     );
     setState(() => _loading = false);
     ScaffoldMessenger.of(context).showSnackBar(

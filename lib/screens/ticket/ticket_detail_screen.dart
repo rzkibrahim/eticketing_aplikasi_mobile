@@ -8,6 +8,7 @@ import '../../widgets/common_widgets.dart';
 import 'edit_ticket_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class TicketDetailScreen extends StatefulWidget {
   final String ticketId;
@@ -164,11 +165,18 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
               tooltip: 'Selesaikan Tiket',
               onPressed: () => _showFinishDialog(context),
             ),
-          if (role == 'admin')
+          if (role == 'admin') ...[
+            IconButton(
+              icon: const Icon(Icons.swap_horiz_rounded),
+              tooltip: 'Ubah Status',
+              onPressed: () => _showChangeStatusDialog(context),
+            ),
             IconButton(
               icon: const Icon(Icons.person_add_outlined),
+              tooltip: 'Assign Helpdesk',
               onPressed: () => _showAssignDialog(context),
             ),
+          ],
         ],
       ),
       body: Column(
@@ -252,15 +260,69 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                // Description tab
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    ticket.description,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 14, height: 1.7,
-                      color: isDark ? Colors.white70 : const Color(0xFF374151)),
-                  ),
-                ),
+                 // Description tab
+                 SingleChildScrollView(
+                   padding: const EdgeInsets.all(16),
+                   child: Column(
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+                       Text(
+                         ticket.description,
+                         style: GoogleFonts.plusJakartaSans(fontSize: 14, height: 1.7,
+                           color: isDark ? Colors.white70 : const Color(0xFF374151)),
+                       ),
+                       if (ticket.attachmentUrl != null && ticket.attachmentUrl!.isNotEmpty) ...[
+                         const SizedBox(height: 20),
+                         Text(
+                           'Lampiran:',
+                           style: GoogleFonts.plusJakartaSans(
+                             fontSize: 13,
+                             fontWeight: FontWeight.bold,
+                             color: isDark ? Colors.white70 : const Color(0xFF374151),
+                           ),
+                         ),
+                         const SizedBox(height: 8),
+                         ClipRRect(
+                           borderRadius: BorderRadius.circular(12),
+                           child: CachedNetworkImage(
+                             imageUrl: ticket.attachmentUrl!,
+                             placeholder: (context, url) => Container(
+                               height: 200,
+                               width: double.infinity,
+                               color: isDark ? AppTheme.darkSurface : Colors.grey.shade100,
+                               child: const Center(
+                                 child: CircularProgressIndicator(
+                                   strokeWidth: 2,
+                                   color: AppTheme.primaryGreen,
+                                 ),
+                               ),
+                             ),
+                             errorWidget: (context, url, error) => Container(
+                               height: 60,
+                               width: double.infinity,
+                               color: AppTheme.dangerRed.withOpacity(0.1),
+                               child: Center(
+                                 child: Row(
+                                   mainAxisAlignment: MainAxisAlignment.center,
+                                   children: [
+                                     const Icon(Icons.error_outline_rounded, color: AppTheme.dangerRed),
+                                     const SizedBox(width: 8),
+                                     Text(
+                                       'Gagal memuat gambar',
+                                       style: GoogleFonts.plusJakartaSans(color: AppTheme.dangerRed, fontSize: 12),
+                                     ),
+                                   ],
+                                 ),
+                               ),
+                             ),
+                             fit: BoxFit.cover,
+                             width: double.infinity,
+                           ),
+                         ),
+                       ],
+                     ],
+                   ),
+                 ),
                 // Comments tab
                 Column(
                   children: [
@@ -487,6 +549,81 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
               );
             },
           )).toList(),
+        ),
+      ),
+    );
+  }
+
+  void _showChangeStatusDialog(BuildContext context) {
+    final provider = context.read<AppProvider>();
+    final ticket = provider.getTicketById(widget.ticketId);
+    if (ticket == null) return;
+
+    final statuses = [
+      {'value': 'open', 'label': 'Open', 'icon': Icons.fiber_new_rounded, 'color': AppTheme.accentOrange},
+      {'value': 'in progress', 'label': 'In Progress', 'icon': Icons.autorenew_rounded, 'color': AppTheme.primaryGreen},
+      {'value': 'closed', 'label': 'Closed', 'icon': Icons.check_circle_rounded, 'color': Colors.grey},
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Ubah Status Tiket', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: statuses.map((s) {
+            final isCurrentStatus = ticket.status == s['value'];
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: isCurrentStatus
+                    ? Border.all(color: s['color'] as Color, width: 2)
+                    : Border.all(color: Colors.grey.shade300),
+              ),
+              child: ListTile(
+                leading: Icon(s['icon'] as IconData, color: s['color'] as Color),
+                title: Text(
+                  s['label'] as String,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                trailing: isCurrentStatus
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: (s['color'] as Color).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text('Saat ini',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10, fontWeight: FontWeight.w600,
+                            color: s['color'] as Color)),
+                      )
+                    : null,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                onTap: isCurrentStatus
+                    ? null
+                    : () async {
+                        await provider.updateTicketStatus(widget.ticketId, s['value'] as String);
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Status diubah menjadi ${s['label']}',
+                              style: GoogleFonts.plusJakartaSans(),
+                            ),
+                            backgroundColor: AppTheme.successGreen,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+              ),
+            );
+          }).toList(),
         ),
       ),
     );
