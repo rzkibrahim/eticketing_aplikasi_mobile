@@ -249,7 +249,7 @@ https://onphaqtfgljduatmuzkt.supabase.co
 | Role | Username | Password | Nama |
 |------|----------|----------|------|
 | **Admin** | `admin` | `admin123` | Admin Utama |
-| **Helpdesk** | `rizky` | `123456` | Rizky Prasetyo |
+| **Helpdesk** | `rizki` | `123456` | Rizki Prasetyo |
 | **Helpdesk** | `dewi` | `123456` | Dewi Kusuma |
 | **User** | `budi` | `123456` | Budi Santoso |
 | **User** | `siti` | `123456` | Siti Rahayu |
