@@ -138,7 +138,7 @@ Aplikasi menggunakan **5 tabel utama** di Supabase PostgreSQL:
 └──────────────────┘
 ```
 
-Detail lengkap schema: [`supabase_schema.sql`](supabase_schema.sql)
+Detail lengkap schema: [`supabase_eticketing.sql`](supabase_eticketing.sql)
 
 ---
 
@@ -148,8 +148,10 @@ Aplikasi ini menggunakan **Supabase REST API (PostgREST)** sebagai backend.
 
 ### Base URL
 ```
-https://onphaqtfgljduatmuzkt.supabase.co
+https://onphaqtfgljduatmuzkt.supabase.co/rest/v1
 ```
+
+> **Catatan:** Semua endpoint di bawah ini relative terhadap base URL di atas. Di dalam kode Flutter, endpoint dipanggil lewat SDK `supabase_flutter` menggunakan `SupabaseService.client.from('nama_tabel')` sehingga tidak perlu menulis URL manual.
 
 ### Header yang Diperlukan
 | Header | Nilai |
@@ -160,12 +162,15 @@ https://onphaqtfgljduatmuzkt.supabase.co
 
 ### Daftar Endpoint API
 
-#### 🔐 Auth
+#### 🔐 Auth (Login & Register)
+
+> **Catatan:** Aplikasi ini **tidak menggunakan Supabase Auth** (`/auth/v1/`), melainkan melakukan login & register langsung lewat query ke tabel `users` menggunakan REST API.
+
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
-| `POST` | `/auth/v1/signup` | Register pengguna baru |
-| `POST` | `/auth/v1/token?grant_type=password` | Login pengguna |
-| `POST` | `/auth/v1/recover` | Reset password |
+| `GET` | `/rest/v1/users?username=eq.<username>&password=eq.<password>` | Login (cek credentials) |
+| `POST` | `/rest/v1/users` | Register pengguna baru |
+| `PATCH` | `/rest/v1/users?email=eq.<email>` | Reset password (update field password) |
 
 #### 👤 Users
 | Method | Endpoint | Deskripsi |
@@ -206,7 +211,7 @@ https://onphaqtfgljduatmuzkt.supabase.co
 | File | Deskripsi |
 |------|-----------|
 | [`swagger.yaml`](swagger.yaml) | Dokumentasi OpenAPI 3.0 (bisa dibuka di [Swagger Editor](https://editor.swagger.io)) |
-| [`uts_mobile_api_collection.json`](uts_mobile_api_collection.json) | Postman Collection (import ke Postman untuk testing) |
+| [`dokumentasi_api_eticketing.json`](dokumentasi_api_eticketing.json) | Postman Collection (import ke Postman untuk testing) |
 
 ---
 
@@ -223,7 +228,7 @@ https://onphaqtfgljduatmuzkt.supabase.co
 1. **Clone repository**
    ```bash
    git clone <repository-url>
-   cd uts_mobile
+   cd eticketing_aplikasi_mobile
    ```
 
 2. **Install dependencies**
@@ -240,7 +245,9 @@ https://onphaqtfgljduatmuzkt.supabase.co
    ```bash
    flutter build apk --release
    ```
-   File APK akan tersedia di: `build/app/outputs/flutter-apk/app-release.apk`
+   File APK hasil build akan tersedia di: `build/app/outputs/flutter-apk/app-release.apk`
+
+   > APK release juga sudah tersedia di folder [`apk/`](apk/) pada repository ini.
 
 ---
 
@@ -282,6 +289,7 @@ https://onphaqtfgljduatmuzkt.supabase.co
 ## 📱 APK Download
 
 File APK release tersedia di folder [`apk/`](apk/) pada repository ini.
+- File: [`apk/uts_mobile_release.apk`](apk/uts_mobile_release.apk)
 
 ---
 
