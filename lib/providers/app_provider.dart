@@ -23,7 +23,7 @@ class AppProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  final _client = SupabaseService.client;
+  final _client = SupabaseService.client; // ← ambil client Supabase
 
   // ============================================================
   // INITIALIZATION — Load all data from Supabase
@@ -43,9 +43,10 @@ class AppProvider extends ChangeNotifier {
       debugPrint('Error loading data: $e');
     }
     _isLoading = false;
-    notifyListeners();
+    notifyListeners(); // ← kasih tau semua Widget: "data udah berubah, rebuild!"
   }
 
+  // Contoh mengambil semua data dari tabel 'users'
   Future<void> _loadUsers() async {
     final data = await _client.from('users').select().order('created_at');
     _users = data.map<UserModel>((json) => UserModel.fromJson(json)).toList();
@@ -246,6 +247,9 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+
+  // Upload File/Attachment (Storage API): Untuk mengunggah gambar/file lampiran, 
+  // aplikasi memanggil API Storage Supabase
   Future<String?> uploadFile(File file, String ticketId) async {
     try {
       final fileName = '${ticketId}_${DateTime.now().millisecondsSinceEpoch}.${file.path.split('.').last}';
@@ -297,6 +301,7 @@ class AppProvider extends ChangeNotifier {
         insertData['attachment_url'] = attachmentUrl;
       }
 
+      // Contoh membuat tiket baru di tabel 'tickets'
       await _client.from('tickets').insert(insertData);
 
       // Add history
@@ -444,10 +449,14 @@ class AppProvider extends ChangeNotifier {
       await _client.from('notifications').delete().eq('ticket_id', ticketId);
       await _client.from('comments').delete().eq('ticket_id', ticketId);
       await _client.from('ticket_history').delete().eq('ticket_id', ticketId);
+
+      // Contoh menghapus data tiket berdasarkan ID tiket
       await _client.from('tickets').delete().eq('id', ticketId);
 
       _tickets.removeWhere((t) => t.id == ticketId);
       _notifications.removeWhere((n) => n.ticketId == ticketId);
+
+      // Memberitahu UI bahwa data telah berubah
       notifyListeners();
     } catch (e) {
       debugPrint('Delete ticket error: $e');

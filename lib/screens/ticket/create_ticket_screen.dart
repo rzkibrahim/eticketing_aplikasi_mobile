@@ -105,7 +105,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
-    await context.read<AppProvider>().createTicket(
+    await context.read<AppProvider>().createTicket( // ← memanggil fungsi untuk buat tiket
       title: _titleCtrl.text.trim(),
       description: _descCtrl.text.trim(),
       category: _category,

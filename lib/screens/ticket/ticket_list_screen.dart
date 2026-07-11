@@ -29,9 +29,9 @@ class _TicketListScreenState extends State<TicketListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AppProvider>();
+    final provider = context.watch<AppProvider>(); // ← ambil provider
     final role = provider.currentUser?.role ?? 'user';
-    var tickets = provider.userTickets;
+    var tickets = provider.userTickets; // ← ambil list tiket dari Provider
 
     // Filter by status
     if (_filterStatus != 'all') {
@@ -135,11 +135,11 @@ class _TicketListScreenState extends State<TicketListScreen> {
                     message: 'Tidak ada tiket ditemukan',
                     icon: Icons.inbox_outlined,
                   )
-                : ListView.builder(
+                : ListView.builder( // ← jumlah tiket
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                     itemCount: tickets.length,
-                    itemBuilder: (_, i) => _TicketListItem(
-                      ticket: tickets[i],
+                    itemBuilder: (_, i) => _TicketListItem( 
+                      ticket: tickets[i], // ← kirim tiket ke-i ke widget card
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(

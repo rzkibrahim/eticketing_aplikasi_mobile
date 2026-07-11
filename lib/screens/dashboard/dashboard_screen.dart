@@ -13,6 +13,7 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Memantau/mendengarkan AppProvider
     final provider = context.watch<AppProvider>();
     final user = provider.currentUser;
 
@@ -24,10 +25,12 @@ class DashboardScreen extends StatelessWidget {
       );
     }
 
+    // 2. Mengambil data dari state provider
     final stats = provider.ticketStats;
     final tickets = provider.userTickets;
     final recentTickets = tickets.take(3).toList();
 
+    // 3. Merender data ke Widget UI
     return Scaffold(
       appBar: AppBar(
         title: const Row(
@@ -46,7 +49,7 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () async => await provider.loadData(),
+        onRefresh: () async => await provider.loadData(), // Menarik ulang data dari API
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
@@ -79,7 +82,7 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   StatCard(
                     label: 'Total',
-                    count: stats['total']!,
+                    count: stats['total']!, // Tampilkan jumlah tiket
                     color: AppTheme.primaryGreen,
                     icon: Icons.confirmation_num_rounded,
                   ),

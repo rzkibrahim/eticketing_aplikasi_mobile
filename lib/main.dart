@@ -9,7 +9,7 @@ import 'screens/auth/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase
+  // Koneksi ke Supabase dilakukan DI SINI, saat app pertama kali dijalankan
   await SupabaseService.initialize();
 
   SystemChrome.setPreferredOrientations([

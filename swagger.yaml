@@ -1,5 +1,5 @@
 openapi: 3.0.0
-info:
+info: 
   title: Aplikasi Mobile - E-Ticketing Helpdesk API
   description: >-
     Dokumentasi API untuk aplikasi E-Ticketing Helpdesk Mobile.
